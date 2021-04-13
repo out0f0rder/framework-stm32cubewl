@@ -1,0 +1,12 @@
+{
+  "name": "framework-stm32cubewl",
+  "version": "1.0.0",
+  "description": "STM32Cube is a set of tools and embedded software bricks available free of charge to enable fast and easy development on the STM32 platform (STM32CubeWL MCU Firmware Package)",
+  "keywords": [
+    "framework",
+    "hal",
+    "stm32",
+    "st"
+  ],
+  "homepage": "https://github.com/STMicroelectronics/STM32CubeWL"
+}
