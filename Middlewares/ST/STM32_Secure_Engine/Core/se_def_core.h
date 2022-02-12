@@ -63,10 +63,6 @@ typedef enum
 
 #define SE_OK                            (0x0012e223UL)      /*!< Secure Engine OK */
 #define SE_KO                            (0x0013023dUL)      /*!< Secure Engine KO */
-#define SE_INIT_ERR                      (0x00130ce5UL)      /*!< Secure Engine initialization error */
-#define SE_BOOT_INFO_ERR                 (0x00135705UL)      /*!< An error occurred when accessing BootInfo area */
-#define SE_BOOT_INFO_ERR_FACTORY_RESET   (0x0013b424UL)      /*!< A factory reset has been executed to recover the 
-                                                                  BootInfo Initialization failure */
 #define SE_SIGNATURE_ERR                 (0x00146ac1UL)      /*!< An error occurred when checking FW signature (Tag) */
 #define SE_ERR_FLASH_READ                (0x0014b817UL)      /*!< An error occurred trying to read the Flash */
 #define SE_BUSY                          (0x1200e578UL)      /*!< SE is managing an interrupt: it cannot managed another service till the end of the interrupt */

@@ -306,7 +306,7 @@ CK_RV     sign_verify_init(CK_SESSION_HANDLE hSession,
       kms_obj_keyhead_t *pkms_object;
       kms_attr_t *P_pKeyAttribute;
       kms_aes_cmac_sv_ctx_t *p_ctx;
-      
+
       /* Read the key value from the Key Handle                 */
       /* Key Handle is the index to one of static or nvm        */
       pkms_object = KMS_Objects_GetPointer(hKey);
@@ -826,7 +826,7 @@ CK_RV     KMS_Sign(CK_SESSION_HANDLE hSession,         /* the session's handle *
         case CKM_AES_CMAC:
         {
           kms_aes_cmac_sv_ctx_t *p_ctx = KMS_GETSESSION(hSession).pCtx;
-          
+
           /* Specify last packet used */
           p_ctx->ca_ctx.mFlags |= CA_E_SK_FINAL_APPEND;
           /* Encrypt Data */
@@ -978,7 +978,7 @@ CK_RV  KMS_Verify(CK_SESSION_HANDLE hSession,         /* the session's handle */
     {
       /* Retrieve the allocated context */
       kms_asym_sv_ctx_t *p_ctx = KMS_GETSESSION(hSession).pCtx;
-      
+
       /* Check parameter */
       if (ulDataLen == 0UL)
       {
@@ -1385,7 +1385,7 @@ CK_RV  KMS_Verify(CK_SESSION_HANDLE hSession,         /* the session's handle */
         {
           /* Retrieve the allocated context */
           kms_aes_cmac_sv_ctx_t *p_ctx = KMS_GETSESSION(hSession).pCtx;
-          
+
           /* Specify last packet used */
           p_ctx->ca_ctx.mFlags |= CA_E_SK_FINAL_APPEND;
           /* Encrypt Data */

@@ -90,7 +90,7 @@ extern "C" {
 #endif /* !defined(NVMS_CFG_WRITE_VERIFY) || defined(__DOXYGEN__) */
 
 /*===========================================================================*/
-/* Derived constants and error checnvms                                        */
+/* Derived constants and error checks                                        */
 /*===========================================================================*/
 
 /*===========================================================================*/
@@ -143,7 +143,7 @@ typedef enum
   NVMS_WARNING_ONE_BLOCK_CORRUPTED  = 0,  /* One Block is erased, and the other is partially corrupted  */
   NVMS_WARNING_ONE_BLOCK_BROKEN = 1,      /* One Block is erased, and the orher is broken  */
   NVMS_WARNING_TWO_BLOCKS_NORMAL = 2,     /* 2 Blocks are marked as NORMAL */
-  NVMS_WARNING_TWO_BLOCK_CORRUPTED = 3,   /* Both blocnvm appear to be partially corrupted, */
+  NVMS_WARNING_TWO_BLOCK_CORRUPTED = 3,   /* Both block appear to be partially corrupted, */
   NVMS_WARNING_ONE_BLOCK_PARTIAL = 4,     /* One Block is normal, the other is partial */
   NVMS_WARNING_ONE_BLOCK_PARTIAL_AND_ONE_BROKEN = 5,  /* One Block is partial, the other is briken */
   NVMS_WARNING_TWO_BLOCKS_BROKEN = 6                  /* Two blocks are Broken */

@@ -180,7 +180,7 @@ SE_ErrorStatus SE_IMG_Erase(uint8_t *pDestination, uint32_t Length)
 SE_ErrorStatus SE_IMG_SetActiveFwState(uint32_t SlotNumber, SE_FwStateTypeDef *pFwState)
 {
   SE_ErrorStatus e_ret_status = SE_ERROR;
-  SE_FwRawHeaderTypeDef *pfw_image_header = (SE_FwRawHeaderTypeDef *) SlotHeaderAdd[SlotNumber]; /* FW metadata */
+  SE_FwRawHeaderTypeDef *pfw_image_header;          /* FW metadata */
 
   const uint8_t zeros_buffer[32] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
                                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
@@ -195,6 +195,16 @@ SE_ErrorStatus SE_IMG_SetActiveFwState(uint32_t SlotNumber, SE_FwStateTypeDef *p
                                    };
 
   SE_FwStateTypeDef current_state = FWIMG_STATE_INVALID;
+
+  /* Control parameter : SlotNumber */
+  if ((SlotNumber >= SLOT_ACTIVE_1) && (SlotNumber < (SLOT_ACTIVE_1 + SFU_NB_MAX_ACTIVE_IMAGE)))
+  {
+    pfw_image_header = (SE_FwRawHeaderTypeDef *) SlotHeaderAdd[SlotNumber];
+  }
+  else
+  {
+    return SE_ERROR;
+  }
 
   /*
    * The Firmware State is available in the header of the slot #0.
@@ -287,7 +297,7 @@ SE_ErrorStatus SE_IMG_GetActiveFwState(uint32_t SlotNumber, SE_FwStateTypeDef *p
 {
   SE_ErrorStatus e_ret_status = SE_ERROR;
   uint8_t buffer[3U * 32U]; /* to read FW State from FLASH */
-  SE_FwRawHeaderTypeDef *pfw_image_header = (SE_FwRawHeaderTypeDef *) SlotHeaderAdd[SlotNumber]; /* FW metadata */
+  SE_FwRawHeaderTypeDef *pfw_image_header;  /* FW metadata */
   const uint8_t ones_buffer[32] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, \
                                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, \
                                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, \
@@ -308,6 +318,17 @@ SE_ErrorStatus SE_IMG_GetActiveFwState(uint32_t SlotNumber, SE_FwStateTypeDef *p
 
   /* Check the pointer allocation */
   if (NULL == pFwState)
+  {
+    return SE_ERROR;
+  }
+
+  /* Control parameter : SlotNumber */
+  if (((SlotNumber >= SLOT_ACTIVE_1) && (SlotNumber < (SLOT_ACTIVE_1 + SFU_NB_MAX_ACTIVE_IMAGE))) ||
+      ((SlotNumber >= SLOT_DWL_1) && (SlotNumber < (SLOT_DWL_1 + SFU_NB_MAX_DWL_AREA))))
+  {
+    pfw_image_header = (SE_FwRawHeaderTypeDef *) SlotHeaderAdd[SlotNumber];
+  }
+  else
   {
     return SE_ERROR;
   }

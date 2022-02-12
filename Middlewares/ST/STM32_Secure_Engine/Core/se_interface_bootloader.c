@@ -27,11 +27,11 @@
 #endif /* __ICCARM__ */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"                       /* se_interface_bootloader.c is compiled in SBSFU project using main.h from 
-                                         * this project 
+#include "main.h"                       /* se_interface_bootloader.c is compiled in SBSFU project using main.h from
+                                         * this project
                                          */
-#include "se_low_level.h"               /* This file is part of SE_CoreBin and adapts the Secure Engine 
-                                         *(and its interface) to the STM32 board specificities 
+#include "se_low_level.h"               /* This file is part of SE_CoreBin and adapts the Secure Engine
+                                         *(and its interface) to the STM32 board specificities
                                          */
 #include "se_interface_common.h"
 #include "se_callgate.h"
@@ -150,89 +150,6 @@ SE_ErrorStatus SE_Startup(void)
 }
 
 /**
-  * @brief call by SFU to read Info Boot inside the protected area.
-  * @param peSE_Status Secure Engine Status.
-  *        This parameter can be a value of @ref SE_Status_Structure_definition.
-  * @param  pxSE_BootInfo BootInfo area pointer that will be filled.
-  * @retval SE_ErrorStatus SE_SUCCESS if successful, SE_ERROR otherwise.
-  */
-SE_ErrorStatus SE_INFO_ReadBootInfo(SE_StatusTypeDef *peSE_Status, SE_BootInfoTypeDef *pxSE_BootInfo)
-{
-  SE_ErrorStatus e_ret_status;
-  uint32_t primask_bit; /*!< interruption mask saved when disabling ITs then restore when re-enabling ITs */
-
-  /* Check if the call is coming from SFU code */
-  __IS_SFU_RESERVED();
-
-#ifdef SFU_ISOLATE_SE_WITH_MPU
-  if (0U != SE_IsUnprivileged())
-  {
-    uint32_t params[2] = {(uint32_t)pxSE_BootInfo, (uint32_t)NULL};
-    SE_SysCall(&e_ret_status, SE_BOOT_INFO_READ_ALL_ID, peSE_Status, &params);
-  }
-  else
-  {
-#endif /* SFU_ISOLATE_SE_WITH_MPU */
-
-    /* Set the CallGate function pointer */
-    SET_CALLGATE();
-
-    /* Enter Secure Mode */
-    SE_EnterSecureMode(&primask_bit);
-
-    /* Secure Engine Call */
-    e_ret_status = (*SE_CallGatePtr)(SE_BOOT_INFO_READ_ALL_ID, peSE_Status, primask_bit, pxSE_BootInfo);
-
-    /* Exit Secure Mode */
-    SE_ExitSecureMode(primask_bit);
-#ifdef SFU_ISOLATE_SE_WITH_MPU
-  }
-#endif /* SFU_ISOLATE_SE_WITH_MPU */
-  return e_ret_status;
-}
-
-/**
-  * @brief  call by SFU to write Info Boot inside the protected area.
-  * @param  peSE_Status Secure Engine Status.
-  * @param  pxSE_BootInfo pxSE_BootInfo BootInfo area pointer.
-  * @retval SE_ErrorStatus SE_SUCCESS if successful, SE_ERROR otherwise.
-  */
-SE_ErrorStatus SE_INFO_WriteBootInfo(SE_StatusTypeDef *peSE_Status, SE_BootInfoTypeDef *pxSE_BootInfo)
-{
-  SE_ErrorStatus e_ret_status;
-  uint32_t primask_bit; /*!< interruption mask saved when disabling ITs then restore when re-enabling ITs */
-
-  /* Check if the call is coming from SFU code */
-  __IS_SFU_RESERVED();
-
-#ifdef SFU_ISOLATE_SE_WITH_MPU
-  if (0U != SE_IsUnprivileged())
-  {
-    uint32_t params[2] = {(uint32_t)pxSE_BootInfo, (uint32_t)NULL};
-    SE_SysCall(&e_ret_status, SE_BOOT_INFO_WRITE_ALL_ID, peSE_Status, &params);
-  }
-  else
-  {
-#endif /* SFU_ISOLATE_SE_WITH_MPU */
-
-    /* Set the CallGate function pointer */
-    SET_CALLGATE();
-
-    /* Enter Secure Mode */
-    SE_EnterSecureMode(&primask_bit);
-
-    /* Secure Engine Call */
-    e_ret_status = (*SE_CallGatePtr)(SE_BOOT_INFO_WRITE_ALL_ID, peSE_Status, primask_bit, pxSE_BootInfo);
-
-    /* Exit Secure Mode */
-    SE_ExitSecureMode(primask_bit);
-#ifdef SFU_ISOLATE_SE_WITH_MPU
-  }
-#endif /* SFU_ISOLATE_SE_WITH_MPU */
-  return e_ret_status;
-}
-
-/**
   * @brief call by SFU to lock part of Secure Engine services
   * @param  pSE_Status Secure Engine Status.
   * @retval SE_ErrorStatus SE_SUCCESS if successful, SE_ERROR otherwise.
@@ -258,6 +175,39 @@ SE_ErrorStatus SE_LockRestrictServices(SE_StatusTypeDef *pSE_Status)
 
     SE_EnterSecureMode(&primask_bit);
     e_ret_status = (*SE_CallGatePtr)(SE_LOCK_RESTRICT_SERVICES, pSE_Status, primask_bit);
+    SE_ExitSecureMode(primask_bit);
+#ifdef SFU_ISOLATE_SE_WITH_MPU
+  }
+#endif /* SFU_ISOLATE_SE_WITH_MPU */
+  return e_ret_status;
+}
+
+/**
+  * @brief call by SFU to trigg FUS or wireless stack update process managed by CM0
+  * @param  pSE_Status Secure Engine Status.
+  * @retval SE_ErrorStatus SE_SUCCESS if successful, SE_ERROR otherwise.
+  */
+SE_ErrorStatus SE_CM0_Update(SE_StatusTypeDef *pSE_Status)
+{
+  SE_ErrorStatus e_ret_status;
+  uint32_t primask_bit; /*!< interruption mask saved when disabling ITs then restore when re-enabling ITs */
+
+  /* Check if the call is coming from SFU code */
+  __IS_SFU_RESERVED();
+#ifdef SFU_ISOLATE_SE_WITH_MPU
+  if (0U != SE_IsUnprivileged())
+  {
+    SE_SysCall(&e_ret_status, SE_CM0_UPDATE, pSE_Status, NULL);
+  }
+  else
+  {
+#endif /* SFU_ISOLATE_SE_WITH_MPU */
+
+    /* Set the CallGate function pointer */
+    SET_CALLGATE();
+
+    SE_EnterSecureMode(&primask_bit);
+    e_ret_status = (*SE_CallGatePtr)(SE_CM0_UPDATE, pSE_Status, primask_bit);
     SE_ExitSecureMode(primask_bit);
 #ifdef SFU_ISOLATE_SE_WITH_MPU
   }
@@ -827,7 +777,7 @@ __root SE_ErrorStatus SE_SFU_IMG_GetActiveFwState(SE_StatusTypeDef *peSE_Status,
   if (0U != SE_IsUnprivileged())
   {
     uint32_t params[2] = {SlotNumber, (uint32_t)pFwState};
-    SE_SysCall(&e_ret_status, SE_CRYPTO_HL_AUTHENTICATE_METADATA, peSE_Status, SlotNumber, &params);
+    SE_SysCall(&e_ret_status, SE_IMG_GET_FW_STATE, peSE_Status, &params);
   }
   else
   {

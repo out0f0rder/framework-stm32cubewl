@@ -27,11 +27,11 @@
 #pragma arm section code = ".SE_IF_Code"
 #endif /* __ICCARM__ */
 
-#include "main.h"                       /* se_interface_common.c is compiled in SBSFU project using main.h from 
-                                         * this project 
+#include "main.h"                       /* se_interface_common.c is compiled in SBSFU project using main.h from
+                                         * this project
                                          */
-#include "se_low_level.h"               /* This file is part of SE_CoreBin and adapts the Secure Engine 
-                                         * (and its interface) to the STM32 board specificities 
+#include "se_low_level.h"               /* This file is part of SE_CoreBin and adapts the Secure Engine
+                                         * (and its interface) to the STM32 board specificities
                                          */
 #include "sfu_low_level.h"
 #include "se_interface_common.h"
@@ -56,7 +56,7 @@
   * @{
   */
 /* Private variables ---------------------------------------------------------*/
-#if defined(__CC_ARM)
+#if defined(__CC_ARM) || defined(__ARMCC_VERSION)
 uint32_t SeCallGateAddress = SE_CALLGATE_REGION_ROM_START;
 #endif /* __CC_ARM */
 
@@ -96,7 +96,7 @@ void SE_EnterSecureMode(uint32_t *pPrimaskBit)
   */
 void SE_ExitSecureMode(uint32_t PrimaskBit)
 {
-  SFU_LL_DummyAccess();   
+  SFU_LL_DummyAccess();
 #if !defined(CKS_ENABLED)
   /* Re-enable the interrupts */
   __set_PRIMASK(PrimaskBit);
@@ -178,8 +178,6 @@ void SE_SVC_Handler(uint32_t *args)
 #ifdef ENABLE_IMAGE_STATE_HANDLING
     case SE_APP_VALIDATE_FW:
 #endif /* ENABLE_IMAGE_STATE_HANDLING */
-    case SE_BOOT_INFO_READ_ALL_ID:
-    case SE_BOOT_INFO_WRITE_ALL_ID:
     case SE_CRYPTO_HL_AUTHENTICATE_METADATA:
     case SE_EXTFLASH_DECRYPT_INIT:
       ret = (*SE_CallGatePtr)((SE_FunctionIDTypeDef)args[1],
@@ -191,6 +189,7 @@ void SE_SVC_Handler(uint32_t *args)
 #ifdef ENABLE_IMAGE_STATE_HANDLING
     case SE_IMG_GET_FW_STATE:
     case SE_IMG_SET_FW_STATE:
+    case SE_APP_GET_FW_STATE:
 #endif /* ENABLE_IMAGE_STATE_HANDLING */
     case SE_APP_GET_ACTIVE_FW_INFO:
     case SE_CRYPTO_LL_DECRYPT_INIT_ID:

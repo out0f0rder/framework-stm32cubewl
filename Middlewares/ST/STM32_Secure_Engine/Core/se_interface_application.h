@@ -70,11 +70,14 @@ SE_ErrorStatus SE_APP_GetActiveFwInfo(SE_StatusTypeDef *peSE_Status, uint32_t Sl
                                       SE_APP_ActiveFwInfo_t *pFwInfo);
 #ifdef ENABLE_IMAGE_STATE_HANDLING
 SE_ErrorStatus SE_APP_ValidateFw(SE_StatusTypeDef *peSE_Status, uint32_t SlotNumber);
+SE_ErrorStatus SE_APP_GetActiveFwState(SE_StatusTypeDef *peSE_Status, uint32_t SlotNumber, SE_FwStateTypeDef *pFwState);
 #endif /* ENABLE_IMAGE_STATE_HANDLING */
 #ifdef SFU_ISOLATE_SE_WITH_MPU
 void SE_APP_SVC_Handler(uint32_t *args);
+#if defined(UPDATE_IRQ_SERVICE)
 SE_ErrorStatus SE_SYS_SaveDisableIrq(SE_StatusTypeDef *peSE_Status, uint32_t *pIrqState, uint32_t IrqStateNb);
 SE_ErrorStatus SE_SYS_RestoreEnableIrq(SE_StatusTypeDef *peSE_Status, uint32_t *pIrqState, uint32_t IrqStateNb);
+#endif /* defined(UPDATE_IRQ_SERVICE) */
 #endif /* SFU_ISOLATE_SE_WITH_MPU */
 
 /**

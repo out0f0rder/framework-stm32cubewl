@@ -32,7 +32,7 @@ SE_SP_SMUGGLE:
 // CHANGE SP
   LDR SP, =__ICFEDIT_SE_region_RAM_stack_top__
 // Let 4 byte to store appli vector address
-  SUB SP, SP, #4  
+  SUB SP, SP, #4
 // push R11 on new stack
   PUSH {R11}
   BLX SE_CallGateService

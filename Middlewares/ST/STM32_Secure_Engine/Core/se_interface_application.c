@@ -27,11 +27,11 @@
 #endif /* __ICCARM__ */
 
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"                       /* se_interface_application.c is compiled in SBSFU project using main.h 
-                                         * from this project 
+#include "main.h"                       /* se_interface_application.c is compiled in SBSFU project using main.h
+                                         * from this project
                                          */
-#include "se_low_level.h"               /* This file is part of SE_CoreBin and adapts the Secure Engine 
-                                         * (and its interface) to the STM32 board specificities 
+#include "se_low_level.h"               /* This file is part of SE_CoreBin and adapts the Secure Engine
+                                         * (and its interface) to the STM32 board specificities
                                          */
 #include "se_interface_common.h"
 #include "se_callgate.h"
@@ -111,7 +111,7 @@ __root SE_ErrorStatus SE_APP_GetActiveFwInfo(SE_StatusTypeDef *peSE_Status, uint
   return e_ret_status;
 }
 
-#ifdef ENABLE_IMAGE_STATE_HANDLING
+#if defined(ENABLE_IMAGE_STATE_HANDLING)
 /**
   * @brief Service called by the User Application to validate a Active Firmware.
   * @param peSE_Status Secure Engine Status.
@@ -152,7 +152,49 @@ __root SE_ErrorStatus SE_APP_ValidateFw(SE_StatusTypeDef *peSE_Status, uint32_t 
 }
 #endif /* ENABLE_IMAGE_STATE_HANDLING */
 
+#ifdef ENABLE_IMAGE_STATE_HANDLING
+/**
+  * @brief Service called by the User Application to retrieve an Active Firmware state.
+  * @param peSE_Status Secure Engine Status.
+  * @param SlotNumber index of the slot in the list
+  * @param pFwState Active Firmware state structure that will be filled.
+  * @retval SE_ErrorStatus SE_SUCCESS if successful, SE_ERROR otherwise.
+  */
+__root SE_ErrorStatus SE_APP_GetActiveFwState(SE_StatusTypeDef *peSE_Status, uint32_t SlotNumber,
+                                              SE_FwStateTypeDef *pFwState)
+{
+  SE_ErrorStatus e_ret_status;
+  uint32_t primask_bit; /*!< interruption mask saved when disabling ITs then restore when re-enabling ITs */
+
 #ifdef SFU_ISOLATE_SE_WITH_MPU
+  if (0U != SE_IsUnprivileged())
+  {
+    uint32_t params[2] = {SlotNumber, (uint32_t)pFwState};
+    SE_SysCall(&e_ret_status, SE_APP_GET_FW_STATE, peSE_Status, &params);
+  }
+  else
+  {
+#endif /* SFU_ISOLATE_SE_WITH_MPU */
+
+    /* Set the CallGate function pointer */
+    SET_CALLGATE();
+
+    /*Enter Secure Mode*/
+    SE_EnterSecureMode(&primask_bit);
+
+    /*Secure Engine Call*/
+    e_ret_status = (*SE_CallGatePtr)(SE_APP_GET_FW_STATE, peSE_Status, primask_bit, SlotNumber, pFwState);
+
+    /*Exit Secure Mode*/
+    SE_ExitSecureMode(primask_bit);
+
+#ifdef SFU_ISOLATE_SE_WITH_MPU
+  }
+#endif /* SFU_ISOLATE_SE_WITH_MPU */
+  return e_ret_status;
+}
+#endif /* ENABLE_IMAGE_STATE_HANDLING */
+
 /**
   * @brief Service called by the User Application to disable all IRQ.
   * @param peSE_Status Secure Engine Status.
@@ -160,6 +202,7 @@ __root SE_ErrorStatus SE_APP_ValidateFw(SE_StatusTypeDef *peSE_Status, uint32_t 
   * @param IrqStateNb number of IRQ states that can be saved
   * @retval SE_ErrorStatus SE_SUCCESS if successful, SE_ERROR otherwise.
   */
+#if defined(SFU_ISOLATE_SE_WITH_MPU) && defined(UPDATE_IRQ_SERVICE)
 __root SE_ErrorStatus SE_SYS_SaveDisableIrq(SE_StatusTypeDef *peSE_Status, uint32_t *pIrqState, uint32_t IrqStateNb)
 {
   SE_ErrorStatus e_ret_status;
@@ -186,9 +229,8 @@ __root SE_ErrorStatus SE_SYS_SaveDisableIrq(SE_StatusTypeDef *peSE_Status, uint3
   }
   return e_ret_status;
 }
-#endif /* SFU_ISOLATE_SE_WITH_MPU */
+#endif /* SFU_ISOLATE_SE_WITH_MPU && UPDATE_IRQ_SERVICE */
 
-#ifdef SFU_ISOLATE_SE_WITH_MPU
 /**
   * @brief Service called by the User Application to restore IRQ.
   * @param peSE_Status Secure Engine Status.
@@ -196,6 +238,7 @@ __root SE_ErrorStatus SE_SYS_SaveDisableIrq(SE_StatusTypeDef *peSE_Status, uint3
   * @param IrqStateNb number of IRQ states to restore
   * @retval SE_ErrorStatus SE_SUCCESS if successful, SE_ERROR otherwise.
   */
+#if defined(SFU_ISOLATE_SE_WITH_MPU) && defined(UPDATE_IRQ_SERVICE)
 __root SE_ErrorStatus SE_SYS_RestoreEnableIrq(SE_StatusTypeDef *peSE_Status, uint32_t *pIrqState, uint32_t IrqStateNb)
 {
   SE_ErrorStatus e_ret_status;
@@ -222,7 +265,7 @@ __root SE_ErrorStatus SE_SYS_RestoreEnableIrq(SE_StatusTypeDef *peSE_Status, uin
   }
   return e_ret_status;
 }
-#endif /* SFU_ISOLATE_SE_WITH_MPU */
+#endif /* SFU_ISOLATE_SE_WITH_MPU && UPDATE_IRQ_SERVICE */
 
 
 #ifdef SFU_ISOLATE_SE_WITH_MPU

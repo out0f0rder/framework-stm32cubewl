@@ -63,8 +63,8 @@ void __gcc_data_init(void);
   * @retval SE_ErrorStatus SE_SUCCESS if successful, SE_ERROR otherwise.
   */
 #if defined(__ARMCC_VERSION)
-__attribute__((section(".SE_Startup_Code")))  
-#endif
+__attribute__((section(".SE_Startup_Code")))
+#endif /* __ARMCC_VERSION */
 __root SE_ErrorStatus SE_CORE_Startup(void)
 {
 

@@ -140,6 +140,14 @@ SE_ErrorStatus SE_LL_Restore_Enable_Irq(uint32_t *pIrqState, uint32_t IrqStateNb
   * @}
   */
 
+/** @addtogroup SE_LOCK_KEYS_Exported_Functions
+  * @{
+  */
+SE_ErrorStatus SE_LL_Lock_Keys(void);
+/**
+  * @}
+  */
+
 /**
   * @}
   */

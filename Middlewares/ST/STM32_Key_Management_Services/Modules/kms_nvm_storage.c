@@ -172,7 +172,7 @@ static nvms_slot_status_t check_slot_instance(nvms_block_t block,
        validity */
     if (hdrp->hdr32[i] != NVMS_LL_ERASED)
     {
-      /* Checnvm on the pointer to the next block, it must be aligned to an
+      /* Check on the pointer to the next block, it must be aligned to an
          header boundary */
       if (((uint32_t)hdrp->fields.next & (NVMS_LL_PAGE_SIZE - 1UL)) != 0UL)
       {
@@ -202,7 +202,7 @@ static nvms_slot_status_t check_slot_instance(nvms_block_t block,
         return NVMS_SLOT_STATUS_BROKEN;
       }
 
-      /* Checnvm on the instance field */
+      /* Check on the instance field */
       if (hdrp->fields.instance == NVMS_LL_ERASED)
       {
         return NVMS_SLOT_STATUS_BROKEN;
@@ -215,7 +215,7 @@ static nvms_slot_status_t check_slot_instance(nvms_block_t block,
         return NVMS_SLOT_STATUS_BROKEN;
       }
 
-      /* Payload checnvmum */
+      /* Payload checksum */
       checksum = do_checksum(hdrp->hdr8 + sizeof(nvms_data_header_t),
                              hdrp->fields.data_size);
       if (checksum != hdrp->fields.data_checksum)
@@ -300,7 +300,7 @@ static nvms_block_status_t scan_slots(nvms_block_t block,
         /* Calling end-of-scan callback if defined */
         endcallback(hdrp);
 
-        /* An erased header marnvm the end of the chain */
+        /* An erased header mark the end of the chain */
         if (warning)
         {
           status = NVMS_STATUS_PARTIAL;
@@ -407,7 +407,7 @@ static nvms_error_t find_slot(nvms_block_t block,
     {
       case NVMS_SLOT_STATUS_ERASED:
       case NVMS_SLOT_STATUS_BROKEN:
-        /* An erased header or a broken header marnvm the end of the chain */
+        /* An erased header or a broken header mark the end of the chain */
         if (slotp == NULL)
         {
           status = NVMS_DATA_NOT_FOUND;
@@ -502,7 +502,7 @@ static nvms_error_t copy_slot(const nvms_data_header_t *rhdrp,
   }
 
   /* Writing data, the slot size is supposed to be greater than zero
-     because, zero sized slots must not be copied across bannvm */
+     because, zero sized slots must not be copied across bank */
   result = NVMS_LL_Write(rhdrp->hdr8 + sizeof(nvms_data_header_t),
                          &p_next[sizeof(nvms_data_header_t)],
                          size);
@@ -854,7 +854,7 @@ static nvms_error_t try_boot(void)
   sts0 = determine_block_state(NVMS_BLOCK0, &seq0);
   sts1 = determine_block_state(NVMS_BLOCK1, &seq1);
 
-  /* Case 1 - Both blocnvm erased, performs an initialization of block zero
+  /* Case 1 - Both block erased, performs an initialization of block zero
      and starts using it */
   if ((sts0 == NVMS_STATUS_ERASED) && (sts1 == NVMS_STATUS_ERASED))
   {
@@ -942,7 +942,7 @@ static nvms_error_t try_boot(void)
     }
   }
 
-  /* Case 8 - Both blocnvm appear to be correct, we must use the most
+  /* Case 8 - Both block appear to be correct, we must use the most
      recent one and erase the other */
   if ((sts0 == NVMS_STATUS_NORMAL) && (sts1 == NVMS_STATUS_NORMAL))
   {
@@ -972,7 +972,7 @@ static nvms_error_t try_boot(void)
     }
   }
 
-  /* Case 9 - Both blocnvm appear to be partially corrupted, we must use the
+  /* Case 9 - Both block appear to be partially corrupted, we must use the
      most recent one and erase the other */
   if ((sts0 == NVMS_STATUS_PARTIAL) && (sts1 == NVMS_STATUS_PARTIAL))
   {
@@ -1141,7 +1141,7 @@ static nvms_error_t try_boot(void)
     return NVMS_WARNING;
   }
 
-  /* Case 16 - Both bannvm broken */
+  /* Case 16 - Both bank broken */
   CHECK_ERROR(block_erase(NVMS_BLOCK0));
   CHECK_ERROR(block_erase(NVMS_BLOCK1));
   CHECK_ERROR(validate(NVMS_BLOCK0, 1));
@@ -1213,7 +1213,7 @@ nvms_error_t NVMS_Erase(void)
     return NVMS_NOTINIT;
   }
 
-  /* Erasing both blocnvm */
+  /* Erasing both block */
   CHECK_ERROR(block_erase(NVMS_BLOCK0));
   CHECK_ERROR(block_erase(NVMS_BLOCK1));
 

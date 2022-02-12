@@ -22,7 +22,7 @@
         IMPORT DummyMemAccess
         IMPORT SeCallGateStatusParam
         IMPORT SeCallGateAddress
-        
+
 ; ******************************************
 ; Function Name  : SE_UserHandlerWrapper
 ; Description    : call Appli IT Handler

@@ -37,6 +37,13 @@
 #endif /* KMS_NVM_SLOT_NUMBERS */
 
 /*
+ * KMS_VM_SLOT_NUMBERS
+ */
+#if defined(KMS_VM_SLOT_NUMBERS)
+/* No dependency */
+#endif /* KMS_VM_SLOT_NUMBERS */
+
+/*
  * KMS_EXT_TOKEN_ENABLED
  */
 #if defined(KMS_EXT_TOKEN_ENABLED)
@@ -141,6 +148,18 @@ KMS_ECDSA and KMS_EC_SECP256"
 #endif /* KMS_NVM_DYNAMIC_ENABLED */
 
 /*
+ * KMS_VM_DYNAMIC_ENABLED
+ */
+#if defined(KMS_VM_DYNAMIC_ENABLED)
+#if !defined(KMS_VM_SLOT_NUMBERS)
+#error "KMS_VM_DYNAMIC_ENABLED requires KMS_VM_SLOT_NUMBERS"
+#endif /* KMS_VM_SLOT_NUMBERS */
+#if defined(KMS_NVM_DYNAMIC_ENABLED)
+#error "KMS_VM_DYNAMIC_ENABLED is not compatible with KMS_NVM_DYNAMIC_ENABLED"
+#endif /* KMS_NVM_DYNAMIC_ENABLED */
+#endif /* KMS_VM_DYNAMIC_ENABLED */
+
+/*
  * KMS_ENCRYPT
  */
 #if defined(KMS_ENCRYPT)
@@ -208,9 +227,9 @@ KMS_ECDSA and KMS_EC_SECP256"
  * KMS_DERIVE_KEY
  */
 #if defined(KMS_DERIVE_KEY)
-#if !defined(KMS_NVM_DYNAMIC_ENABLED)
-#error "KMS_DERIVE_KEY requires KMS_NVM_DYNAMIC_ENABLED"
-#endif /* KMS_NVM_DYNAMIC_ENABLED */
+#if !defined(KMS_NVM_DYNAMIC_ENABLED) && !defined(KMS_VM_DYNAMIC_ENABLED)
+#error "KMS_DERIVE_KEY requires at least one of KMS_NVM_DYNAMIC_ENABLED and KMS_VM_DYNAMIC_ENABLED"
+#endif /* !KMS_NVM_DYNAMIC_ENABLED && !KMS_VM_DYNAMIC_ENABLED*/
 #if !defined(KMS_AES_ECB) && !defined(KMS_ECDSA)
 #error "KMS_DERIVE_KEY requires KMS_AES_ECB OR KMS_ECDSA"
 #endif /* !KMS_AES_ECB && !KMS_ECDSA */
@@ -230,8 +249,8 @@ KMS_ECDSA and KMS_EC_SECP256"
  * KMS_GENERATE_KEYS
  */
 #if defined(KMS_GENERATE_KEYS)
-#if !defined(KMS_NVM_DYNAMIC_ENABLED) || !defined(KMS_ECDSA)
-#error "KMS_GENERATE_KEYS requires KMS_NVM_DYNAMIC_ENABLED AND KMS_ECDSA"
+#if (!defined(KMS_NVM_DYNAMIC_ENABLED) && !defined(KMS_VM_DYNAMIC_ENABLED)) || !defined(KMS_ECDSA)
+#error "KMS_GENERATE_KEYS requires KMS_ECDSA AND at least one of KMS_NVM_DYNAMIC_ENABLED and KMS_VM_DYNAMIC_ENABLED"
 #endif /* !KMS_NVM_DYNAMIC_ENABLED && !KMS_ECDSA */
 #if !(KMS_ECDSA & KMS_FCT_GENERATE_KEYS)
 #error "KMS_GENERATE_KEYS requires KMS_FCT_GENERATE_KEYS to be enabled for at lest one signature algorithm"
@@ -256,9 +275,9 @@ KMS_ECDSA and KMS_EC_SECP256"
  * KMS_OBJECTS
  */
 #if defined(KMS_OBJECTS)
-#if !defined(KMS_NVM_DYNAMIC_ENABLED)
-#error "KMS_OBJECTS requires KMS_NVM_DYNAMIC_ENABLED"
-#endif /* KMS_NVM_DYNAMIC_ENABLED */
+#if !defined(KMS_NVM_DYNAMIC_ENABLED) && !defined(KMS_VM_DYNAMIC_ENABLED)
+#error "KMS_OBJECTS requires at least one of KMS_NVM_DYNAMIC_ENABLED and KMS_VM_DYNAMIC_ENABLED"
+#endif /* !KMS_NVM_DYNAMIC_ENABLED && !KMS_VM_DYNAMIC_ENABLED */
 #endif /* KMS_OBJECTS */
 
 /*

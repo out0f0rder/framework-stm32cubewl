@@ -494,22 +494,23 @@ def sub_mergev2(args, bb_dict, bin, bin_base, bin_end):
 def do_mergev2(args):
     bb_dict=dict()
     # loop on elf files
-    elffiles = args.files.split(';')
-    for ef in elffiles:
-      with open(ef, 'rb') as f:
-          # get the data
-          my_elffile = ELFFile(f)
-          elf_binary, elf_base = get_binary(my_elffile, args.value,args.elf)
-          elf_end = elf_base + len(elf_binary)
-          print("Adding ELF file: "+ef+" from "+hex(elf_base)+" to "+hex(elf_end))
-          # check if first file or injection needed
-          if 'big_binary' in bb_dict:
-            sub_mergev2(args, bb_dict, elf_binary, elf_base, elf_end)
-          else:
-            # first copy
-            bb_dict['big_binary'] = elf_binary
-            bb_dict['bb_base'] = elf_base
-            bb_dict['bb_end'] = elf_end
+    if args.files:
+      elffiles = args.files.split(';')
+      for ef in elffiles:
+        with open(ef, 'rb') as f:
+            # get the data
+            my_elffile = ELFFile(f)
+            elf_binary, elf_base = get_binary(my_elffile, args.value,args.elf)
+            elf_end = elf_base + len(elf_binary)
+            print("Adding ELF file: "+ef+" from "+hex(elf_base)+" to "+hex(elf_end))
+            # check if first file or injection needed
+            if 'big_binary' in bb_dict:
+              sub_mergev2(args, bb_dict, elf_binary, elf_base, elf_end)
+            else:
+              # first copy
+              bb_dict['big_binary'] = elf_binary
+              bb_dict['bb_base'] = elf_base
+              bb_dict['bb_end'] = elf_end
     # loop on binary files
     binfiles = args.binaries.split(';')
     for bf in binfiles:
@@ -518,7 +519,7 @@ def do_mergev2(args):
       with open(_bf, 'rb') as f:
           # get the data
           bin_binary = f.read()
-          bin_base = int(_add, 0)
+          bin_base = auto_int(_add) & 0xffffffff
           bin_end = bin_base + len(bin_binary)
           print("Adding BIN file: "+_bf+" from "+hex(bin_base)+" to "+hex(bin_end))
           # check if first file or injection needed
@@ -932,7 +933,7 @@ def args():
     
     mrgv2 = subs.add_parser('mergev2', help='merge elf files and binaries in a contiguous binary')
     mrgv2.add_argument('-b', '--binaries', type=str,  help="binaries to merge files list (ex:'f1.bin@0x08004500;f1.bin@0x08006000'", required = True)
-    mrgv2.add_argument('-f', '--files', type=str,  help="elf files to merge list (ex:'f1.elf;f2.elf'", required = True)
+    mrgv2.add_argument('-f', '--files', type=str,  help="elf files to merge list (ex:'f1.elf;f2.elf'", required = False)
     mrgv2.add_argument('-v', '--value', help= "byte padding pattern", required = False, type=int, default=0xff)
     mrgv2.add_argument('-e', '--elf', help='elf type set to 1 for GNU, 0 for other by default', type=int, default=1) 
     mrgv2.add_argument("outfile", help = "filename of contiguous binary")

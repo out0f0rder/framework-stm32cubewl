@@ -22,7 +22,7 @@
         .global SeCallGateStatusParam
         .global __ICFEDIT_SE_CallGate_region_ROM_start__
         .syntax unified
-        .thumb       
+        .thumb
 
 /******************************************
  * Function Name  : SE_UserHandlerWrapper
@@ -58,7 +58,7 @@ SE_UserHandlerWrapper:
         MOV R2, #0xFFFFFFFF              // invalid Primask
 // re-enter in firewall via SE_CallGate
         LDR R3, =__ICFEDIT_SE_CallGate_region_ROM_start__
-        ADD R3, R3, #1
+        ADD R3, R3, #5
         BLX R3                           // LR shall be updated otherwise __IS_CALLER_SE_IF will fail in Se_CallGate
 // we shall not raise this point
         // B NVIC_SystemReset

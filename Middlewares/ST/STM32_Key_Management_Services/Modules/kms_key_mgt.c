@@ -26,7 +26,8 @@
 #include "kms_key_mgt.h"        /* KMS key creation services */
 #include "kms_enc_dec.h"        /* Encryption & key storage service for key derivation */
 #include "kms_objects.h"        /* KMS object management services */
-#include "kms_nvm_storage.h"    /* KMS storage services */
+#include "kms_nvm_storage.h"    /* KMS NVM storage services */
+#include "kms_vm_storage.h"     /* KMS VM storage services */
 #include "kms_platf_objects.h"  /* KMS platform objects services */
 #include "CryptoApi/ca.h"       /* Crypto API services */
 #include "kms_ecc.h"            /* KMS elliptic curves utils */

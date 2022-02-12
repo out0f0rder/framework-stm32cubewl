@@ -45,6 +45,13 @@ static inline uint32_t __get_SP(void)
 
 #if defined(__CC_ARM)
 #define __get_LR __return_address
+#elif defined(__ARMCC_VERSION)
+__attribute__((always_inline)) static inline uint32_t __get_LR(void)
+{
+  register uint32_t result;
+  __asm volatile("MOV %0, LR" : "=r"(result));
+  return result;
+}
 #elif defined(__GNUC__)
 static inline uint32_t __get_LR(void)
 {
@@ -57,7 +64,7 @@ static inline uint32_t __get_LR(void)
 #if defined(__ICCARM__)
 extern void *__vector_table;
 #define SeVectorsTable __vector_table
-#elif defined(__CC_ARM)
+#elif defined(__CC_ARM) || defined(__ARMCC_VERSION)
 extern void *__Vectors;
 #define SeVectorsTable __Vectors
 #elif defined(__GNUC__)

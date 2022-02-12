@@ -55,7 +55,7 @@ CK_DECLARE_FUNCTION_POINTER(CK_RV, CK_C_Finalize)(CK_VOID_PTR pReserved);
 CK_DECLARE_FUNCTION(CK_RV,    C_GetInfo)(CK_INFO_PTR pInfo);
 CK_DECLARE_FUNCTION_POINTER(CK_RV, CK_C_GetInfo)(CK_INFO_PTR pInfo);
 
-/* C_GetFunctionList obtains a pointer to the Cryptoki library’s list of function pointers */
+/* C_GetFunctionList obtains a pointer to the Cryptoki library list of function pointers */
 CK_DECLARE_FUNCTION(CK_RV,    C_GetFunctionList)(CK_FUNCTION_LIST_PTR_PTR ppFunctionList);
 CK_DECLARE_FUNCTION_POINTER(CK_RV, CK_C_GetFunctionList)(CK_FUNCTION_LIST_PTR_PTR ppFunctionList);
 
@@ -117,7 +117,7 @@ CK_DECLARE_FUNCTION_POINTER(CK_RV, CK_C_InitToken)(CK_SLOT_ID      slotID,
                                                    CK_ULONG        ulPinLen,
                                                    CK_UTF8CHAR_PTR pLabel);
 
-/* C_InitPIN initializes the normal user’s PIN */
+/* C_InitPIN initializes the normal user PIN */
 CK_DECLARE_FUNCTION(CK_RV,    C_InitPIN)(CK_SESSION_HANDLE hSession,
                                          CK_UTF8CHAR_PTR   pPin,
                                          CK_ULONG          ulPinLen);
@@ -674,7 +674,7 @@ CK_DECLARE_FUNCTION_POINTER(CK_RV, CK_C_DeriveKey)(CK_SESSION_HANDLE    hSession
  * Random number generation functions
  */
 
-/* C_SeedRandom mixes additional seed material into the token’s random number generator */
+/* C_SeedRandom mixes additional seed material into the token random number generator */
 CK_DECLARE_FUNCTION(CK_RV,    C_SeedRandom)(CK_SESSION_HANDLE hSession,
                                             CK_BYTE_PTR       pSeed,
                                             CK_ULONG          ulSeedLen);

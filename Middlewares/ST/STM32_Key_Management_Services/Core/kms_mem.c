@@ -285,7 +285,7 @@ void KMS_MemInit(void)
   * @brief  Allocate memory
   * @param  Session Session requesting the memory
   * @param  Size Size of the memory to allocate
-  * @retval Allocated pointer if successed to allocate, NULL_PTR if failed
+  * @retval Allocated pointer if successful to allocate, NULL_PTR if failed
   */
 #if !defined(KMS_MEM_USE_CUSTOM_ALLOCATOR)
 CK_VOID_PTR KMS_Alloc(CK_SESSION_HANDLE Session, size_t Size)

@@ -28,7 +28,6 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "se_def.h"
-#include "se_bootinfo.h"
 
 /** @addtogroup SE Secure Engine
   * @{
@@ -50,12 +49,11 @@ extern "C" {
 SE_ErrorStatus SE_Init(SE_StatusTypeDef *peSE_Status, uint32_t uSystemCoreClock);
 SE_ErrorStatus SE_Startup(void);
 
-/* BootInfo handlers */
-SE_ErrorStatus SE_INFO_ReadBootInfo(SE_StatusTypeDef *peSE_Status, SE_BootInfoTypeDef *pxSE_BootInfo);
-SE_ErrorStatus SE_INFO_WriteBootInfo(SE_StatusTypeDef *peSE_Status, SE_BootInfoTypeDef *pxSE_BootInfo);
-
 /* Lock function to prevent the user-app from running bootloader reserved code */
 SE_ErrorStatus SE_LockRestrictServices(SE_StatusTypeDef *pSE_Status);
+
+/* FUS or wireless stack update process managed by CM0 */
+SE_ErrorStatus SE_CM0_Update(SE_StatusTypeDef *pSE_Status);
 
 /* Configure "On The Fly DECryption" mechanism (OTFDEC) for external FLASH */
 SE_ErrorStatus SE_ExtFlash_Decrypt_Init(SE_StatusTypeDef *pSE_Status, SE_FwRawHeaderTypeDef *pxSE_Metadata);

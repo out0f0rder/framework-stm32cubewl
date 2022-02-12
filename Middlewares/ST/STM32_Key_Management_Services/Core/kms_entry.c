@@ -785,8 +785,9 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
 
       object_range = KMS_Objects_GetRange(hObject);
 
-      /* Only NVM dynamic IDs are destroyable */
-      if (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID)
+      /* Only NVM / VM dynamic IDs are destroyable */
+      if ((object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID) ||
+          (object_range == KMS_OBJECT_RANGE_VM_DYNAMIC_ID))
       {
         e_ret_status = KMS_DestroyObject(hSession, hObject);
       }
@@ -862,7 +863,8 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
 
       if ((object_range == KMS_OBJECT_RANGE_EMBEDDED) ||
           (object_range == KMS_OBJECT_RANGE_NVM_STATIC_ID) ||
-          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID))
+          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID) ||
+          (object_range == KMS_OBJECT_RANGE_VM_DYNAMIC_ID))
       {
         e_ret_status = KMS_GetAttributeValue(hSession, hObject, pTemplate, ulCount);
       }
@@ -938,7 +940,8 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
 
       /* Only NVM objects allows modification */
       if ((object_range == KMS_OBJECT_RANGE_NVM_STATIC_ID) ||
-          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID))
+          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID) ||
+          (object_range == KMS_OBJECT_RANGE_VM_DYNAMIC_ID))
       {
         (void)pTemplate;
         (void)ulCount;
@@ -1754,7 +1757,8 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
 
       if ((object_range == KMS_OBJECT_RANGE_EMBEDDED) ||
           (object_range == KMS_OBJECT_RANGE_NVM_STATIC_ID) ||
-          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID))
+          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID) ||
+          (object_range == KMS_OBJECT_RANGE_VM_DYNAMIC_ID))
       {
         e_ret_status = KMS_SignInit(hSession, pMechanism, hKey);
       }
@@ -1845,7 +1849,8 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
 
       if ((object_range == KMS_OBJECT_RANGE_EMBEDDED) ||
           (object_range == KMS_OBJECT_RANGE_NVM_STATIC_ID) ||
-          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID))
+          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID) ||
+          (object_range == KMS_OBJECT_RANGE_VM_DYNAMIC_ID))
       {
         e_ret_status = KMS_Sign(hSession, pData, ulDataLen, pSignature, pulSignatureLen);
       }
@@ -1940,7 +1945,8 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
 
       if ((object_range == KMS_OBJECT_RANGE_EMBEDDED) ||
           (object_range == KMS_OBJECT_RANGE_NVM_STATIC_ID) ||
-          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID))
+          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID) ||
+          (object_range == KMS_OBJECT_RANGE_VM_DYNAMIC_ID))
       {
         e_ret_status = KMS_VerifyInit(hSession, pMechanism, hKey);
       }
@@ -2027,7 +2033,8 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
 
       if ((object_range == KMS_OBJECT_RANGE_EMBEDDED) ||
           (object_range == KMS_OBJECT_RANGE_NVM_STATIC_ID) ||
-          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID))
+          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID) ||
+          (object_range == KMS_OBJECT_RANGE_VM_DYNAMIC_ID))
       {
         e_ret_status = KMS_Verify(hSession, pData, ulDataLen, pSignature, ulSignatureLen);
       }
@@ -2126,7 +2133,8 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
 
       if ((object_range == KMS_OBJECT_RANGE_EMBEDDED) ||
           (object_range == KMS_OBJECT_RANGE_NVM_STATIC_ID) ||
-          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID))
+          (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID) ||
+          (object_range == KMS_OBJECT_RANGE_VM_DYNAMIC_ID))
       {
         e_ret_status = KMS_DeriveKey(hSession, pMechanism, hBaseKey, pTemplate, ulAttributeCount, phKey);
       }

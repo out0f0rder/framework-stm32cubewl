@@ -1,3 +1,6 @@
+#ifndef SE_API_H
+#define SE_API_H
+
 
 /*!
  \if SIGFOX PATTERN
@@ -15,7 +18,7 @@
     !!!!  DO NOT MODIFY THIS FILE !!!!
 
   ----------------------------------------------
- \endif
+ \endif
   ----------------------------------------------*/
 
 /*!
@@ -30,12 +33,12 @@
  */
 
 /********************************************************
- * External API dependencies to link with this library.
- *
- * Error codes of the SE API functions are described below.
- * The Manufacturer can add more error code taking care of the limits defined.
- * 
- ********************************************************/
+* External API dependencies to link with this library.
+*
+* Error codes of the SE API functions are described below.
+* The Manufacturer can add more error code taking care of the limits defined.
+*
+********************************************************/
 
 /*!
  * \defgroup SE_ERR_API_xx codes Return Error codes definition for SE API
@@ -48,17 +51,23 @@
  *  @{
  */
 
-/* ---------------------------------------------------------------- */
-/* Bytes reserved for MCU API ERROR CODES : From 0x10 to 0x2F       */
-/* ---------------------------------------------------------------- */
+/*
+ * ----------------------------------------------------------------
+ * Bytes reserved for MCU API ERROR CODES : From 0x10 to 0x2F
+ * ----------------------------------------------------------------
+ */
 
-/* ---------------------------------------------------------------- */
-/* Bytes reserved for RF API ERROR CODES : From 0x30 to 0x3F        */
-/* ---------------------------------------------------------------- */
+/*
+ * ----------------------------------------------------------------
+ * Bytes reserved for RF API ERROR CODES : From 0x30 to 0x3F
+ * ----------------------------------------------------------------
+ */
 
-/* ---------------------------------------------------------------- */
-/* Bytes reserved for SE API ERROR CODES : From 0x40 to 0x5F        */
-/* ---------------------------------------------------------------- */
+/*
+ * ----------------------------------------------------------------
+ * Bytes reserved for SE API ERROR CODES : From 0x40 to 0x5F
+ * ----------------------------------------------------------------
+ */
 #define SE_ERR_API_INIT                       (sfx_u8)(0x40) /*!< Error on SE_API_init */
 #define SE_ERR_API_OPEN                       (sfx_u8)(0x41) /*!< Error on SE_API_open */
 #define SE_ERR_API_CLOSE                      (sfx_u8)(0x42) /*!< Error on SE_API_close */
@@ -70,28 +79,32 @@
 #define SE_ERR_API_RC_PERIOD                  (sfx_u8)(0x48) /*!< Error: set RCSync period but SE is not encrypting data */
 #define SE_ERR_API_GEN_RCSYNC                 (sfx_u8)(0x49) /*!< Error: RCSync frame required but SE is not encrypting data */
 
-/* ---------------------------------------------------------------- */
-/* Bytes reserved for REPEATER API ERROR CODES : From 0x60 to 0x7F  */
-/* ---------------------------------------------------------------- */
+/*
+ * ----------------------------------------------------------------
+ * Bytes reserved for REPEATER API ERROR CODES : From 0x60 to 0x7F
+ * ----------------------------------------------------------------
+ */
 
-/* ------------------------------------------------------------------- */
-/* Bytes reserved for MCU MONARCH API ERROR CODES : From 0x80 to 0x8F  */
-/* ------------------------------------------------------------------- */
+/*
+ * ----------------------------------------------------------------
+ * Bytes reserved for MONARCH API ERROR CODES : From 0x80 to 0x8F
+ * ----------------------------------------------------------------
+ */
 
 
 /** @}*/
 
 /********************************
  * \enum sfx_se_frame_type_t
- * \brief Frame type used within the SE to 
- * identify the type of frame which has to 
- * be build. 
+ * \brief Frame type used within the SE to
+ * identify the type of frame which has to
+ * be build.
  *******************************/
 typedef enum
 {
-    SFX_SE_FRAME,        /*!< All Frame types except RC SYNC  */
-    SFX_SE_RC_SYNC,      /*!< RC SYNC Frame type  */
-} sfx_se_frame_type_t;
+    SFX_SE_FRAME, /*!< All Frame types except RC SYNC  */
+    SFX_SE_RC_SYNC, /*!< RC SYNC Frame type  */
+}sfx_se_frame_type_t;
 
 /*!******************************************************************
  * \fn sfx_u8 SE_API_get_version(sfx_u8 **version, sfx_u8 *size)
@@ -101,9 +114,9 @@ typedef enum
  * \param[out] sfx_u8 *size                     Size of the byte array pointed by *version
  *
  * \retval SFX_ERR_NONE:                        No error
- * \retval SE_ERR_API_GET_VERSION:              Get Version error 
+ * \retval SE_ERR_API_GET_VERSION:              Get Version error
  *******************************************************************/
-sfx_u8 SE_API_get_version(sfx_u8 **version, sfx_u8 *size);
+sfx_u8 SE_API_get_version(sfx_u8** version, sfx_u8* size);
 
 /*!******************************************************************
  * \fn sfx_u8 SE_API_init(void)
@@ -166,7 +179,7 @@ sfx_u8 SE_API_get_device_id(sfx_u8 dev_id[ID_LENGTH]);
  * \retval SFX_ERR_NONE:                        No error
  * \retval SE_ERR_API_GET_PAC:                  Error when getting initial PAC
  *******************************************************************/
-sfx_u8 SE_API_get_initial_pac(sfx_u8 *initial_pac);
+sfx_u8 SE_API_get_initial_pac(sfx_u8* initial_pac);
 
 /*!******************************************************************
  * \fn sfx_u8 SE_API_secure_uplink_message(sfx_u8 *customer_data, sfx_u8 customer_data_length, sfx_bool initiate_downlink_frame, sfx_se_frame_type_t frame_type, sfx_bool *send_rcsync, sfx_u8 *frame_ptr, sfx_u8 *frame_length)
@@ -183,13 +196,13 @@ sfx_u8 SE_API_get_initial_pac(sfx_u8 *initial_pac);
  * \retval SFX_ERR_NONE:                        No error
  * \retval SE_ERR_API_SECURE_UP_MSG             Error on SE_API_secure_uplink_message
  *******************************************************************/
-sfx_u8 SE_API_secure_uplink_message(sfx_u8 *customer_data,
+sfx_u8 SE_API_secure_uplink_message(sfx_u8* customer_data,
                                     sfx_u8 customer_data_length,
                                     sfx_bool initiate_downlink_frame,
                                     sfx_se_frame_type_t frame_type,
-                                    sfx_bool *send_rcsync,
-                                    sfx_u8 *frame_ptr,
-                                    sfx_u8 *frame_length);
+                                    sfx_bool* send_rcsync,
+                                    sfx_u8* frame_ptr,
+                                    sfx_u8* frame_length);
 
 /*!******************************************************************
  * \fn sfx_u8 SE_API_verify_downlink_message(sfx_u8 *frame_ptr, sfx_bool *valid)
@@ -201,7 +214,7 @@ sfx_u8 SE_API_secure_uplink_message(sfx_u8 *customer_data,
  * \retval SFX_ERR_NONE:                        No error
  * \retval SE_ERR_API_VERIFY_DL_MSG             Error on SE_API_verify_downlink_message
  *******************************************************************/
-sfx_u8 SE_API_verify_downlink_message(sfx_u8 *frame_ptr, sfx_bool *valid);
+sfx_u8 SE_API_verify_downlink_message(sfx_u8* frame_ptr, sfx_bool* valid);
 
 /*!******************************************************************
  * \fn sfx_u8 SE_API_set_rc_sync_period(sfx_u16 period)
@@ -214,3 +227,5 @@ sfx_u8 SE_API_verify_downlink_message(sfx_u8 *frame_ptr, sfx_bool *valid);
  *******************************************************************/
 sfx_u8 SE_API_set_rc_sync_period(sfx_u16 rc_sync_period);
 
+
+#endif /* SE_API_H */

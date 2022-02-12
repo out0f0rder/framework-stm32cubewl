@@ -29,7 +29,6 @@
 #include "se_user_application.h"  /* user application services called by the User Application */
 #include "se_callgate.h"
 #include "se_key.h"
-#include "se_bootinfo.h"
 #include "se_utils.h"
 #include "se_fwimg.h"
 #include "se_low_level.h"
@@ -41,6 +40,9 @@
 #elif defined (__ICCARM__) || defined(__GNUC__)
 #include "mapping_export.h"
 #endif /* __ICCARM__ || __GNUC__ */
+#if defined (CKS_ENABLED)
+#include "se_cm0.h"
+#endif /* CKS_ENABLED */
 
 /* Include SE interface header files to access interface definitions */
 #include "se_interface_common.h"
@@ -51,7 +53,6 @@
 #include "kms.h"
 #include "kms_entry.h"
 #include "kms_objects.h"
-#include "kms_platf_objects_interface.h"
 #endif /* KMS_ENABLED */
 
 /** @addtogroup SE Secure Engine
@@ -153,12 +154,12 @@ uint32_t SE_UserHandlerWrapperAddr = SE_IF_REGION_ROM_START + 1UL;
   */
 
 /* Private function prototypes ----------------------------------------------- */
-SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * const peSE_Status, va_list arguments);
+SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef *const peSE_Status, va_list arguments);
 
 /**
   * @brief Switch stack pointer from SB RAM region to SE RAM region then call SE_CallGateService
   */
-SE_ErrorStatus SE_SP_SMUGGLE(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * const peSE_Status, va_list arguments);
+SE_ErrorStatus SE_SP_SMUGGLE(SE_FunctionIDTypeDef eID, SE_StatusTypeDef *const peSE_Status, va_list arguments);
 
 #if defined(IT_MANAGEMENT)
 void SE_ExitHandler_Service(void);
@@ -197,12 +198,12 @@ __attribute__((optimize("O0")))
   * @param peSE_Status: Secure Engine Status.
   * @retval SE_ErrorStatus SE_SUCCESS if successful, SE_ERROR otherwise.
   */
-SE_ErrorStatus SE_CallGate(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * const peSE_Status, uint32_t PrimaskParam, ...)
+SE_ErrorStatus SE_CallGate(SE_FunctionIDTypeDef eID, SE_StatusTypeDef *const peSE_Status, uint32_t PrimaskParam, ...)
 {
   SE_ErrorStatus e_ret_status;
   va_list arguments;
   volatile uint32_t LR;
-	
+
 #if defined(__CC_ARM) || defined(__ICCARM__)
   LR = __get_LR();
 #elif defined(__ARMCC_VERSION)
@@ -347,7 +348,7 @@ SE_ErrorStatus SE_CallGate(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * const pe
   * @param arguments: argument list to be extracted. Depends on each protected function ID.
   * @retval SE_ErrorStatus SE_SUCCESS if successful, SE_ERROR otherwise.
   */
-SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * const peSE_Status, va_list arguments)
+SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef *const peSE_Status, va_list arguments)
 {
 
   /*
@@ -382,7 +383,6 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
     case SE_INIT_ID:
     {
       uint32_t se_system_core_clock;
-      SE_INFO_StatusTypedef e_boot_info_status;
 
       /* Check that the Secure Engine services are not locked */
       IS_SE_LOCKED_SERVICES();
@@ -390,40 +390,19 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
       /* Retrieve argument(s) */
       se_system_core_clock = va_arg(arguments, uint32_t);
 
-      *peSE_Status = SE_INIT_ERR;
-
-      /* CRC configuration may have been changed by application */
-      if (SE_LL_CRC_Config() == SE_ERROR)
-      {
-        e_ret_status = SE_ERROR;
-        break;
-      }
-
       /* Double Check to avoid basic fault injection : Check that the Secure Engine services are not locked */
       IS_SE_LOCKED_SERVICES();
 
       /* Initialization of SystemCoreClock variable in Secure Engine binary */
       SE_SetSystemCoreClock(se_system_core_clock);
 
-      /* Initialization of Shared Info. If BootInfoArea hw/Fw initialization not possible,
-      the only option is to try a Factory Reset */
-      e_ret_status = SE_INFO_BootInfoAreaInit(&e_boot_info_status);
-      if (e_ret_status != SE_SUCCESS)
-      {
-        e_ret_status = SE_INFO_BootInfoAreaFactoryReset();
-        if (e_ret_status == SE_SUCCESS)
-        {
-          *peSE_Status = SE_BOOT_INFO_ERR_FACTORY_RESET;
-        }
-        else
-        {
-          *peSE_Status = SE_BOOT_INFO_ERR;
-        }
-      }
-      else
-      {
-        *peSE_Status = SE_OK;
-      }
+#if defined(CKS_ENABLED)
+      /* Init communication for keys management with CPU2 */
+      CM0_Init();
+#endif /* defined(CKS_ENABLED) */
+
+      *peSE_Status = SE_OK;
+      e_ret_status = SE_SUCCESS;
 
       /* NOTE : Other initialization may be added here. */
       break;
@@ -865,116 +844,6 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
       break;
     }
 
-    case SE_BOOT_INFO_READ_ALL_ID:
-    {
-      SE_BootInfoTypeDef    *p_boot_info;
-      SE_INFO_StatusTypedef e_boot_info_status;
-
-      /* Check that the Secure Engine services are not locked */
-      IS_SE_LOCKED_SERVICES();
-
-      /* Retrieve argument(s) */
-      p_boot_info = va_arg(arguments, SE_BootInfoTypeDef *);
-
-      /* CRC configuration may have been changed by application */
-      if (SE_LL_CRC_Config() == SE_ERROR)
-      {
-        e_ret_status = SE_ERROR;
-        break;
-      }
-
-      /* Check structure allocation */
-      if (SE_LL_Buffer_in_SBSFU_ram(p_boot_info, sizeof(*p_boot_info)) != SE_SUCCESS)
-      {
-        e_ret_status = SE_ERROR;
-        break;
-      }
-
-      /* Double Check to avoid basic fault injection : Check that the Secure Engine services are not locked */
-      IS_SE_LOCKED_SERVICES();
-
-      /* Double Check to avoid basic fault injection : Check structure allocation */
-      if (SE_LL_Buffer_in_SBSFU_ram(p_boot_info, sizeof(*p_boot_info)) != SE_SUCCESS)
-      {
-        e_ret_status = SE_ERROR;
-        break;
-      }
-
-      /* Read BootInfo */
-      if (SE_INFO_ReadBootInfoArea(p_boot_info, &e_boot_info_status) != SE_SUCCESS)
-      {
-        e_ret_status = SE_ERROR;
-        *peSE_Status = SE_BOOT_INFO_ERR;
-      }
-      else
-      {
-        e_ret_status = SE_SUCCESS;
-        *peSE_Status = SE_OK;
-      }
-
-      break;
-    }
-
-    case SE_BOOT_INFO_WRITE_ALL_ID:
-    {
-      SE_BootInfoTypeDef    *p_boot_info;
-      SE_INFO_StatusTypedef e_boot_info_status;
-
-      /* Check that the Secure Engine services are not locked */
-      IS_SE_LOCKED_SERVICES();
-
-      /* Retrieve argument(s) */
-      p_boot_info = va_arg(arguments, SE_BootInfoTypeDef *);
-
-      /* CRC configuration may have been changed by application */
-      if (SE_LL_CRC_Config() == SE_ERROR)
-      {
-        e_ret_status = SE_ERROR;
-        break;
-      }
-
-      /* Check structure allocation */
-      if (SE_LL_Buffer_in_SBSFU_ram(p_boot_info, sizeof(*p_boot_info)) != SE_SUCCESS)
-      {
-        e_ret_status = SE_ERROR;
-        break;
-      }
-
-      /* Double Check to avoid basic fault injection : Check that the Secure Engine services are not locked */
-      IS_SE_LOCKED_SERVICES();
-
-      /* Double Check to avoid basic fault injection : Check structure allocation */
-      if (SE_LL_Buffer_in_SBSFU_ram(p_boot_info, sizeof(*p_boot_info)) != SE_SUCCESS)
-      {
-        e_ret_status = SE_ERROR;
-        break;
-      }
-
-      /*
-       * Add CRC.
-       * The CRC is computed with the structure without its CRC field and the length is provided to SE_HAL_CRC_Calculate
-       * in 32-bit word.
-       * Please note that this works only if the CRC field is kept as the last uint32_t of the SE_BootInfoTypeDef
-       * structure.
-       */
-      p_boot_info->CRC32 = SE_LL_CRC_Calculate((uint32_t *)(uint32_t)(p_boot_info),
-                                               (sizeof(SE_BootInfoTypeDef) - sizeof(uint32_t)) / sizeof(uint32_t));
-
-      /* Write BootInfo */
-      if (SE_INFO_WriteBootInfoArea(p_boot_info, &e_boot_info_status) != SE_SUCCESS)
-      {
-        e_ret_status = SE_ERROR;
-        *peSE_Status = SE_BOOT_INFO_ERR;
-      }
-      else
-      {
-        e_ret_status = SE_SUCCESS;
-        *peSE_Status = SE_OK;
-      }
-
-      break;
-    }
-
     case SE_IMG_READ:
     {
       uint8_t *p_destination;
@@ -1066,10 +935,36 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
       break;
     }
 
-    case SE_LOCK_RESTRICT_SERVICES:
+#if defined(CKS_ENABLED)
+    case SE_CM0_UPDATE:
     {
       /* Check that the Secure Engine services are not locked, LOCK shall be called only once */
       IS_SE_LOCKED_SERVICES();
+
+      /* FUS or wireless stack update process is managed by CM0 */
+      e_ret_status = CM0_Update();
+
+      break;
+    }
+#endif /* CKS_ENABLED */
+
+    case SE_LOCK_RESTRICT_SERVICES:
+    {
+#if defined(CKS_ENABLED)
+      /* Lock and remove the keys from AES HW */
+      SE_CRYPTO_Lock_CKS_Keys();
+
+      /*
+       *  SE_LOCK_RESTRICT_SERVICES is called twice to avoid basic fault injection
+       *  But, CM0_DeInit should be called only the second time to be able to maintain the communication link
+       *  with CM0
+       */
+      if (SE_LockRestrictedServices == SE_LOCKED)
+      {
+        /* Ends communication with CM0 in order to allow UserApp to restart the communication */
+        CM0_DeInit();
+      }
+#endif /* CKS_ENABLED */
 
       /*
        * Clean-up secure engine RAM area for series with secure memory isolation because Flash is hidden when secure
@@ -1080,31 +975,16 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
       /* Lock restricted services */
       SE_LockRestrictedServices = SE_LOCKED;
       e_ret_status = SE_SUCCESS;
-#if defined(CKS_ENABLED)
-      /* Lock and remove the keys from AES HW */
-      SE_CRYPTO_Lock_Keys();
-#endif /* defined(CKS_ENABLED) */
+
+      /* As soon as the SBSFU is done, we can LOCK the keys */
+      if (SE_LL_Lock_Keys() != SE_SUCCESS)
+      {
+        e_ret_status = SE_ERROR;
+        break;
+      }
 
       /* Double instruction to avoid basic fault injection */
       SE_LockRestrictedServices = SE_LOCKED;
-
-#ifdef KMS_ENABLED
-      /* As soon as the SBSFU is done, we can LOCK the keys */
-#ifdef KMS_SBSFU_KEY_AES128_OBJECT_HANDLE
-      KMS_LockKeyHandle(KMS_SBSFU_KEY_AES128_OBJECT_HANDLE);
-#endif /* KMS_SBSFU_KEY_AES128_OBJECT_HANDLE */
-#ifdef KMS_SBSFU_KEY_ECDSA_OBJECT_HANDLE
-      KMS_LockKeyHandle(KMS_SBSFU_KEY_ECDSA_OBJECT_HANDLE);
-#endif /* KMS_SBSFU_KEY_ECDSA_OBJECT_HANDLE */
-
-      /* Double instruction to avoid basic fault injection */
-#ifdef KMS_SBSFU_KEY_AES128_OBJECT_HANDLE
-      KMS_LockKeyHandle(KMS_SBSFU_KEY_AES128_OBJECT_HANDLE);
-#endif /* KMS_SBSFU_KEY_AES128_OBJECT_HANDLE */
-#ifdef KMS_SBSFU_KEY_ECDSA_OBJECT_HANDLE
-      KMS_LockKeyHandle(KMS_SBSFU_KEY_ECDSA_OBJECT_HANDLE);
-#endif /* KMS_SBSFU_KEY_ECDSA_OBJECT_HANDLE */
-#endif /* KMS_ENABLED */
       break;
     }
 
@@ -1153,14 +1033,14 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
       p_fw_state = va_arg(arguments, SE_FwStateTypeDef *);
 
       /* Check the source buffer */
-      if (SE_LL_Buffer_in_SBSFU_ram(p_fw_state, sizeof(*p_fw_state)) != SE_SUCCESS)
+      if (SE_LL_Buffer_in_SBSFU_ram((void *)p_fw_state, sizeof(*p_fw_state)) != SE_SUCCESS)
       {
         e_ret_status = SE_ERROR;
         break;
       }
 
       /* Double Check to avoid basic fault injection : check the source buffer */
-      if (SE_LL_Buffer_in_SBSFU_ram(p_fw_state, sizeof(*p_fw_state)) != SE_SUCCESS)
+      if (SE_LL_Buffer_in_SBSFU_ram((void *)p_fw_state, sizeof(*p_fw_state)) != SE_SUCCESS)
       {
         e_ret_status = SE_ERROR;
         break;
@@ -1186,7 +1066,7 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
       p_fw_state = va_arg(arguments, SE_FwStateTypeDef *);
 
       /* Check the source buffer */
-      if (SE_LL_Buffer_in_SBSFU_ram(p_fw_state, sizeof(*p_fw_state)) != SE_SUCCESS)
+      if (SE_LL_Buffer_in_SBSFU_ram((void *)p_fw_state, sizeof(*p_fw_state)) != SE_SUCCESS)
       {
         e_ret_status = SE_ERROR;
         break;
@@ -1196,7 +1076,7 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
       IS_SE_LOCKED_SERVICES();
 
       /* Double Check to avoid basic fault injection : check the source buffer */
-      if (SE_LL_Buffer_in_SBSFU_ram(p_fw_state, sizeof(*p_fw_state)) != SE_SUCCESS)
+      if (SE_LL_Buffer_in_SBSFU_ram((void *)p_fw_state, sizeof(*p_fw_state)) != SE_SUCCESS)
       {
         e_ret_status = SE_ERROR;
         break;
@@ -1280,7 +1160,49 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
     }
 #endif /* ENABLE_IMAGE_STATE_HANDLING */
 
-#ifdef SFU_ISOLATE_SE_WITH_MPU
+#ifdef ENABLE_IMAGE_STATE_HANDLING
+    case SE_APP_GET_FW_STATE:
+    {
+      uint32_t slot_number;
+      SE_FwStateTypeDef *p_fw_state;
+
+      /* Retrieve argument(s) */
+      slot_number = va_arg(arguments, uint32_t);
+      p_fw_state = va_arg(arguments, SE_FwStateTypeDef *);
+
+      /* Check the source buffer */
+      if (SE_LL_Buffer_in_SBSFU_ram((void *)p_fw_state, sizeof(*p_fw_state)) != SE_SUCCESS)
+      {
+        e_ret_status = SE_ERROR;
+        break;
+      }
+
+      if (SE_LL_Buffer_part_of_SE_ram((void *)p_fw_state, sizeof(*p_fw_state)) == SE_SUCCESS)
+      {
+        e_ret_status = SE_ERROR;
+        break;
+      }
+
+      /* Double Check to avoid basic fault injection : check the source buffer */
+      if (SE_LL_Buffer_in_SBSFU_ram((void *)p_fw_state, sizeof(*p_fw_state)) != SE_SUCCESS)
+      {
+        e_ret_status = SE_ERROR;
+        break;
+      }
+
+      if (SE_LL_Buffer_part_of_SE_ram((void *)p_fw_state, sizeof(*p_fw_state)) == SE_SUCCESS)
+      {
+        e_ret_status = SE_ERROR;
+        break;
+      }
+
+      /* Read state */
+      e_ret_status = SE_IMG_GetActiveFwState(slot_number, p_fw_state);
+      break;
+    }
+#endif /* ENABLE_IMAGE_STATE_HANDLING */
+
+#if defined(SFU_ISOLATE_SE_WITH_MPU) && defined(UPDATE_IRQ_SERVICE)
     case SE_SYS_SAVE_DISABLE_IRQ:
     {
       uint32_t *pIrqState;
@@ -1291,24 +1213,24 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
       IrqStateNb = va_arg(arguments, uint32_t);
 
       /* Check structure allocation */
-      if (SE_LL_Buffer_in_ram((void *)pIrqState, IrqStateNb*sizeof(*pIrqState)) != SE_SUCCESS)
+      if (SE_LL_Buffer_in_ram((void *)pIrqState, IrqStateNb * sizeof(*pIrqState)) != SE_SUCCESS)
       {
         e_ret_status = SE_ERROR;
         break;
       }
-      if (SE_LL_Buffer_part_of_SE_ram((void *)pIrqState, IrqStateNb*sizeof(*pIrqState)) == SE_SUCCESS)
+      if (SE_LL_Buffer_part_of_SE_ram((void *)pIrqState, IrqStateNb * sizeof(*pIrqState)) == SE_SUCCESS)
       {
         e_ret_status = SE_ERROR;
         break;
       }
 
       /* Double Check to avoid basic fault injection : Check structure allocation */
-      if (SE_LL_Buffer_in_ram((void *)pIrqState, IrqStateNb*sizeof(*pIrqState)) != SE_SUCCESS)
+      if (SE_LL_Buffer_in_ram((void *)pIrqState, IrqStateNb * sizeof(*pIrqState)) != SE_SUCCESS)
       {
         e_ret_status = SE_ERROR;
         break;
       }
-      if (SE_LL_Buffer_part_of_SE_ram((void *)pIrqState, IrqStateNb*sizeof(*pIrqState)) == SE_SUCCESS)
+      if (SE_LL_Buffer_part_of_SE_ram((void *)pIrqState, IrqStateNb * sizeof(*pIrqState)) == SE_SUCCESS)
       {
         e_ret_status = SE_ERROR;
         break;
@@ -1317,9 +1239,9 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
       e_ret_status = SE_LL_Save_Disable_Irq(pIrqState, IrqStateNb);
       break;
     }
-#endif /* SFU_ISOLATE_SE_WITH_MPU */
+#endif /* SFU_ISOLATE_SE_WITH_MPU && UPDATE_IRQ_SERVICE */
 
-#ifdef SFU_ISOLATE_SE_WITH_MPU
+#if defined(SFU_ISOLATE_SE_WITH_MPU) && defined(UPDATE_IRQ_SERVICE)
     case SE_SYS_RESTORE_ENABLE_IRQ:
     {
       uint32_t *pIrqState;
@@ -1330,24 +1252,24 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
       IrqStateNb = va_arg(arguments, uint32_t);
 
       /* Check structure allocation */
-      if (SE_LL_Buffer_in_ram((void *)pIrqState, IrqStateNb*sizeof(*pIrqState)) != SE_SUCCESS)
+      if (SE_LL_Buffer_in_ram((void *)pIrqState, IrqStateNb * sizeof(*pIrqState)) != SE_SUCCESS)
       {
         e_ret_status = SE_ERROR;
         break;
       }
-      if (SE_LL_Buffer_part_of_SE_ram((void *)pIrqState, IrqStateNb*sizeof(*pIrqState)) == SE_SUCCESS)
+      if (SE_LL_Buffer_part_of_SE_ram((void *)pIrqState, IrqStateNb * sizeof(*pIrqState)) == SE_SUCCESS)
       {
         e_ret_status = SE_ERROR;
         break;
       }
 
       /* Double Check to avoid basic fault injection : Check structure allocation */
-      if (SE_LL_Buffer_in_ram((void *)pIrqState, IrqStateNb*sizeof(*pIrqState)) != SE_SUCCESS)
+      if (SE_LL_Buffer_in_ram((void *)pIrqState, IrqStateNb * sizeof(*pIrqState)) != SE_SUCCESS)
       {
         e_ret_status = SE_ERROR;
         break;
       }
-      if (SE_LL_Buffer_part_of_SE_ram((void *)pIrqState, IrqStateNb*sizeof(*pIrqState)) == SE_SUCCESS)
+      if (SE_LL_Buffer_part_of_SE_ram((void *)pIrqState, IrqStateNb * sizeof(*pIrqState)) == SE_SUCCESS)
       {
         e_ret_status = SE_ERROR;
         break;
@@ -1357,7 +1279,7 @@ SE_ErrorStatus SE_CallGateService(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * c
 
       break;
     }
-#endif /* SFU_ISOLATE_SE_WITH_MPU */
+#endif /* SFU_ISOLATE_SE_WITH_MPU && UPDATE_IRQ_SERVICE */
 
     default:
     {

@@ -93,11 +93,19 @@ extern "C" {
   * A local variable is used to avoid constraints regarding the SRAM1 handling,
   * as the SE_Init is called in SB_SFU context but the se_interface functions can be called in the UserApp context too.
   */
+#if defined (__ICCARM__) || defined(__ARMCC_VERSION)
 #define SET_CALLGATE() \
   SE_ErrorStatus(*SE_CallGatePtr)(SE_FunctionIDTypeDef ID, SE_StatusTypeDef *peSE_Status, \
                                   uint32_t PrimaskValue, ...);  /*!< Secure Engine CALLGATE  pointer function*/ \
   SE_CallGatePtr = (SE_ErrorStatus(*)(SE_FunctionIDTypeDef, SE_StatusTypeDef *, \
                                       uint32_t, ...))((uint32_t) SE_CALLGATE_REGION_ROM_START + 1U);
+#else
+#define SET_CALLGATE() \
+  SE_ErrorStatus(*SE_CallGatePtr)(SE_FunctionIDTypeDef ID, SE_StatusTypeDef *peSE_Status, \
+                                  uint32_t PrimaskValue, ...);  /*!< Secure Engine CALLGATE  pointer function*/ \
+  SE_CallGatePtr = (SE_ErrorStatus(*)(SE_FunctionIDTypeDef, SE_StatusTypeDef *, \
+                                      uint32_t, ...))((uint32_t) SE_CALLGATE_REGION_ROM_START + 5U);
+#endif /* SET_CALLGATE */
 /**
   * @}
   */

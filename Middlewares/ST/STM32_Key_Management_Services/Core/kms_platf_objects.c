@@ -23,7 +23,8 @@
 #if defined(KMS_ENABLED)
 #include "kms_init.h"                     /* KMS session services */
 #include "kms_platf_objects.h"            /* KMS platform objects services */
-#include "kms_nvm_storage.h"              /* KMS storage services */
+#include "kms_nvm_storage.h"              /* KMS NVM storage services */
+#include "kms_vm_storage.h"               /* KMS VM storage services */
 #define KMS_PLATF_OBJECTS_C
 #include "kms_platf_objects_config.h"     /* KMS embedded objects definitions */
 
@@ -56,6 +57,21 @@
 #endif /* KMS_NVM_SLOT_NUMBERS < (KMS_INDEX_MAX_NVM_DYNAMIC_OBJECTS-KMS_INDEX_MIN_NVM_STATIC_OBJECTS+1) */
 #endif /* KMS_NVM_DYNAMIC_ENABLED */
 #endif /* KMS_NVM_ENABLED */
+#ifdef KMS_VM_DYNAMIC_ENABLED
+#if (KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS > KMS_INDEX_MAX_VM_DYNAMIC_OBJECTS)
+#error "VM dynamic ID objects index min and max are not well ordered"
+#endif /* KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS > KMS_INDEX_MAX_VM_DYNAMIC_OBJECTS */
+#if defined(KMS_NVM_ENABLED)
+#if (KMS_INDEX_MAX_NVM_STATIC_OBJECTS >= KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS)
+#error "NVM static IDs & VM Dynamic IDs ranges are overlapping"
+#endif /* KMS_INDEX_MAX_NVM_STATIC_OBJECTS >= KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS */
+#else /* KMS_NVM_DYNAMIC_ENABLED */
+#if (KMS_INDEX_MAX_EMBEDDED_OBJECTS >= KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS)
+#error "Embedded IDs & VM Dynamic IDs ranges are overlapping"
+#endif /* KMS_INDEX_MAX_EMBEDDED_OBJECTS >= KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS */
+#endif /* KMS_NVM_DYNAMIC_ENABLED */
+
+#endif /* KMS_VM_DYNAMIC_ENABLED */
 
 /** @addtogroup Key_Management_Services Key Management Services (KMS)
   * @{
@@ -93,6 +109,20 @@ static kms_obj_keyhead_t *KMS_PlatfObjects_NvmDynamicList[KMS_INDEX_MAX_NVM_DYNA
                                                           KMS_INDEX_MIN_NVM_DYNAMIC_OBJECTS + 1];
 #endif /* KMS_NVM_DYNAMIC_ENABLED */
 #endif /* KMS_NVM_ENABLED */
+
+#ifdef KMS_VM_DYNAMIC_ENABLED
+/**
+  * @brief  VM initialization status
+  */
+static uint32_t kms_platf_vm_initialisation_done = 0UL;
+
+/**
+  * @brief  VM dynamic objects access variables
+  * @note   This "cache" table is used to speed up access to VM dynamic objects
+  */
+static kms_obj_keyhead_t *KMS_PlatfObjects_VmDynamicList[KMS_INDEX_MAX_VM_DYNAMIC_OBJECTS -
+                                                         KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS + 1];
+#endif /* KMS_VM_DYNAMIC_ENABLED */
 /**
   * @}
   */
@@ -103,6 +133,9 @@ static void KMS_PlatfObjects_NvmStaticObjectList(void);
 #ifdef KMS_NVM_DYNAMIC_ENABLED
 static void KMS_PlatfObjects_NvmDynamicObjectList(void);
 #endif  /* KMS_NVM_DYNAMIC_ENABLED */
+#ifdef KMS_VM_DYNAMIC_ENABLED
+static void KMS_PlatfObjects_VmDynamicObjectList(void);
+#endif  /* KMS_VM_DYNAMIC_ENABLED */
 /* Private function ----------------------------------------------------------*/
 /** @addtogroup KMS_PLATF_Private_Functions Private Functions
   * @{
@@ -119,7 +152,7 @@ static void KMS_PlatfObjects_NvmStaticObjectList(void)
   kms_obj_keyhead_t *p_nvms_data;
 
   /* Load the KMS_PlatfObjects_NvmStaticList[], used to store buffer to NVM  */
-  /* This should save processiong time  */
+  /* This should save processing time  */
   for (uint32_t i = KMS_INDEX_MIN_NVM_STATIC_OBJECTS; i < KMS_INDEX_MAX_NVM_STATIC_OBJECTS; i++)
   {
     /* Read values from NVM */
@@ -149,8 +182,8 @@ static void KMS_PlatfObjects_NvmDynamicObjectList(void)
   kms_obj_keyhead_t *p_nvms_data;
 
   /* Load the KMS_PlatfObjects_NvmDynamicList[], used to store buffer to NVM  */
-  /* This should save processiong time  */
-  for (uint32_t i = KMS_INDEX_MIN_NVM_DYNAMIC_OBJECTS; i < KMS_INDEX_MAX_NVM_DYNAMIC_OBJECTS; i++)
+  /* This should save processing time  */
+  for (uint32_t i = KMS_INDEX_MIN_NVM_DYNAMIC_OBJECTS; i <= KMS_INDEX_MAX_NVM_DYNAMIC_OBJECTS; i++)
   {
     /* Read values from NVM */
     nvms_rv = NVMS_GET_DATA(i - KMS_INDEX_MIN_NVM_STATIC_OBJECTS, &nvms_data_size, (uint8_t **)(uint32_t)&p_nvms_data);
@@ -167,6 +200,37 @@ static void KMS_PlatfObjects_NvmDynamicObjectList(void)
   }
 }
 #endif  /* KMS_NVM_DYNAMIC_ENABLED */
+
+#ifdef KMS_VM_DYNAMIC_ENABLED
+/**
+  * @brief  Update @ref KMS_PlatfObjects_VmDynamicList with VM contents
+  * @retval None
+  */
+static void KMS_PlatfObjects_VmDynamicObjectList(void)
+{
+  vms_error_t  vms_rv;
+  size_t vms_data_size;
+  kms_obj_keyhead_t *p_vms_data;
+
+  /* Load the KMS_PlatfObjects_VmDynamicList[], used to store buffer to VM  */
+  /* This should save processing time  */
+  for (uint32_t i = KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS; i <= KMS_INDEX_MAX_VM_DYNAMIC_OBJECTS; i++)
+  {
+    /* Read values from VM */
+    vms_rv = VMS_GET_DATA(i - KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS, &vms_data_size, (uint8_t **)(uint32_t)&p_vms_data);
+
+    if ((vms_data_size != 0UL) && (vms_rv == VMS_NOERROR))
+    {
+      KMS_PlatfObjects_VmDynamicList[i - KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS] = p_vms_data;
+    }
+    else
+    {
+      KMS_PlatfObjects_VmDynamicList[i - KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS] = NULL;
+    }
+
+  }
+}
+#endif  /* KMS_VM_DYNAMIC_ENABLED */
 /**
   * @}
   */
@@ -250,15 +314,42 @@ kms_obj_keyhead_t *KMS_PlatfObjects_NvmDynamicObject(uint32_t hKey)
 }
 #endif  /* KMS_NVM_DYNAMIC_ENABLED */
 
-#ifdef KMS_NVM_DYNAMIC_ENABLED
+#ifdef KMS_VM_DYNAMIC_ENABLED
 /**
-  * @brief  Search an available NVM dynamic ID to store blob object
+  * @brief  Returns range of VM dynamic objects
+  * @param  pMin VM dynamic objects min ID
+  * @param  pMax VM dynamic objects max ID
+  * @retval None
+  */
+void KMS_PlatfObjects_VmDynamicRange(uint32_t *pMin, uint32_t *pMax)
+{
+  *pMin = KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS;
+  *pMax = KMS_INDEX_MAX_VM_DYNAMIC_OBJECTS;
+}
+#endif  /* KMS_VM_DYNAMIC_ENABLED */
+
+#ifdef KMS_VM_DYNAMIC_ENABLED
+/**
+  * @brief  Returns VM dynamic object corresponding to given key handle
+  * @param  hKey key handle
+  * @retval Corresponding object
+  */
+kms_obj_keyhead_t *KMS_PlatfObjects_VmDynamicObject(uint32_t hKey)
+{
+  return KMS_PlatfObjects_VmDynamicList[hKey - KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS];
+}
+#endif  /* KMS_VM_DYNAMIC_ENABLED */
+
+#if defined(KMS_NVM_DYNAMIC_ENABLED) || defined(KMS_VM_DYNAMIC_ENABLED)
+/**
+  * @brief  Search an available NVM / VM dynamic ID to store blob object
   * @param  pBlob  Blob object to store
-  * @param  pObjId NVM dynamic ID
+  * @param  pObjId NVM / VM dynamic ID
   * @retval CKR_OK
   *         CKR_ARGUMENTS_BAD
   *         CKR_DEVICE_MEMORY
   *         @ref KMS_PlatfObjects_NvmStoreObject returned values
+  *         @ref KMS_PlatfObjects_VmStoreObject returned values
   */
 CK_RV KMS_PlatfObjects_AllocateAndStore(kms_obj_keyhead_no_blob_t *pBlob, CK_OBJECT_HANDLE_PTR pObjId)
 {
@@ -272,8 +363,9 @@ CK_RV KMS_PlatfObjects_AllocateAndStore(kms_obj_keyhead_no_blob_t *pBlob, CK_OBJ
   else
   {
     *pObjId = KMS_HANDLE_KEY_NOT_KNOWN;
+#ifdef KMS_NVM_DYNAMIC_ENABLED
     /* Find a Free place in nvm dynamic table */
-    for (Index = 0; Index < (KMS_INDEX_MAX_NVM_DYNAMIC_OBJECTS - KMS_INDEX_MIN_NVM_DYNAMIC_OBJECTS); Index++)
+    for (Index = 0; Index <= (KMS_INDEX_MAX_NVM_DYNAMIC_OBJECTS - KMS_INDEX_MIN_NVM_DYNAMIC_OBJECTS); Index++)
     {
       if (KMS_PlatfObjects_NvmDynamicList[Index] == NULL)
       {
@@ -281,6 +373,18 @@ CK_RV KMS_PlatfObjects_AllocateAndStore(kms_obj_keyhead_no_blob_t *pBlob, CK_OBJ
         break;
       }
     }
+#endif /* KMS_NVM_DYNAMIC_ENABLED */
+#ifdef KMS_VM_DYNAMIC_ENABLED
+    /* Find a Free place in vm dynamic table */
+    for (Index = 0; Index <= (KMS_INDEX_MAX_VM_DYNAMIC_OBJECTS - KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS); Index++)
+    {
+      if (KMS_PlatfObjects_VmDynamicList[Index] == NULL)
+      {
+        *pObjId = Index + KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS;
+        break;
+      }
+    }
+#endif /* KMS_VM_DYNAMIC_ENABLED */
     if (*pObjId == KMS_HANDLE_KEY_NOT_KNOWN)
     {
       /* No place found in Dynamic List */
@@ -290,10 +394,18 @@ CK_RV KMS_PlatfObjects_AllocateAndStore(kms_obj_keyhead_no_blob_t *pBlob, CK_OBJ
     {
       /* Update object ID */
       pBlob->object_id = *pObjId;
+#ifdef KMS_NVM_DYNAMIC_ENABLED
       /* Store in NVM storage */
       e_ret_status = KMS_PlatfObjects_NvmStoreObject(*pObjId,
                                                      (uint8_t *)pBlob,
                                                      pBlob->blobs_size + sizeof(kms_obj_keyhead_no_blob_t));
+#endif /* KMS_NVM_DYNAMIC_ENABLED */
+#ifdef KMS_VM_DYNAMIC_ENABLED
+      /* Store in VM storage */
+      e_ret_status = KMS_PlatfObjects_VmStoreObject(*pObjId,
+                                                    (uint8_t *)pBlob,
+                                                    pBlob->blobs_size + sizeof(kms_obj_keyhead_no_blob_t));
+#endif /* KMS_VM_DYNAMIC_ENABLED */
       /* A Garbage collection generate a WARNING ==> Not an error */
       if (e_ret_status != CKR_OK)
       {
@@ -303,7 +415,7 @@ CK_RV KMS_PlatfObjects_AllocateAndStore(kms_obj_keyhead_no_blob_t *pBlob, CK_OBJ
   }
   return e_ret_status;
 }
-#endif /* KMS_NVM_DYNAMIC_ENABLED */
+#endif /* KMS_NVM_DYNAMIC_ENABLED || KMS_NVM_DYNAMIC_ENABLED */
 
 #ifdef KMS_EXT_TOKEN_ENABLED
 /**
@@ -333,7 +445,7 @@ void KMS_PlatfObjects_ExtTokenDynamicRange(uint32_t *pMin, uint32_t *pMax)
 
 /**
   * @brief  Initialize platform objects
-  * @note   Initialize NVM storage and fill "cache" buffers
+  * @note   Initialize NVM / VM storage and fill "cache" buffers
   * @retval None
   */
 void KMS_PlatfObjects_Init(void)
@@ -353,6 +465,18 @@ void KMS_PlatfObjects_Init(void)
 #endif /* KMS_NVM_DYNAMIC_ENABLED */
 
 #endif /* KMS_NVM_ENABLED */
+
+#ifdef KMS_VM_DYNAMIC_ENABLED
+  /* The VMS_Init should be done only once */
+  if (kms_platf_vm_initialisation_done == 0UL)
+  {
+    /* Initialize the VMS */
+    (void)VMS_Init();
+    kms_platf_vm_initialisation_done = 1UL;
+  }
+
+  KMS_PlatfObjects_VmDynamicObjectList();
+#endif /* KMS_VM_DYNAMIC_ENABLED */
 }
 
 /**
@@ -368,6 +492,14 @@ void KMS_PlatfObjects_Finalize(void)
   /* We must re-allow the call to NVMS_Init() */
   kms_platf_nvm_initialisation_done = 0UL;
 #endif /* KMS_NVM_ENABLED */
+
+#ifdef KMS_VM_DYNAMIC_ENABLED
+  /* Finalize the VMS */
+  VMS_Deinit();
+
+  /* We must re-allow the call to VMS_Init() */
+  kms_platf_vm_initialisation_done = 0UL;
+#endif /* KMS_VM_DYNAMIC_ENABLED */
 }
 
 #ifdef KMS_NVM_ENABLED
@@ -485,6 +617,79 @@ CK_ULONG KMS_PlatfObjects_GetBlobDecryptKey(void)
 }
 #endif /* KMS_IMPORT_BLOB */
 #endif /* KMS_NVM_ENABLED */
+
+#ifdef KMS_VM_DYNAMIC_ENABLED
+/**
+  * @brief  Store object in VM storage
+  * @note   Either static or dynamic objects
+  * @param  ObjectId Object ID
+  * @param  pObjectToAdd Object to add
+  * @param  ObjectSize Object size
+  * @retval CKR_OK if storage is successful
+  *         CKR_DEVICE_MEMORY otherwise
+  */
+CK_RV KMS_PlatfObjects_VmStoreObject(uint32_t ObjectId, uint8_t *pObjectToAdd,  uint32_t ObjectSize)
+{
+  vms_error_t  rv;
+  CK_RV e_ret_status;
+
+  /* It's a VM DYNAMIC object */
+  if ((ObjectId >= KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS) && (ObjectId <= KMS_INDEX_MAX_VM_DYNAMIC_OBJECTS))
+  {
+    rv = VMS_WRITE_DATA(ObjectId - KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS, ObjectSize, (const uint8_t *)pObjectToAdd);
+  }
+  else
+  {
+    rv = VMS_SLOT_INVALID;
+  }
+
+  /* A WARNING was generated ==> Not an error */
+  if ((rv == VMS_NOERROR) || (rv == VMS_WARNING))
+  {
+    e_ret_status = CKR_OK;
+  }
+  else
+  {
+    e_ret_status = CKR_DEVICE_MEMORY;
+  }
+
+  KMS_PlatfObjects_VmDynamicObjectList();
+
+  return e_ret_status;
+}
+
+/**
+  * @brief  Remove object from VM storage
+  * @note   Only dynamic objects
+  * @param  ObjectId Object ID
+  * @retval CKR_OK if removal is successful
+  *         CKR_DEVICE_MEMORY otherwise
+  */
+CK_RV KMS_PlatfObjects_VmRemoveObject(uint32_t ObjectId)
+{
+  vms_error_t rv = VMS_DATA_NOT_FOUND;
+  CK_RV e_ret_status;
+
+  /* Check that the ObjectID is in dynamic range */
+  if ((ObjectId >= KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS) && (ObjectId <= KMS_INDEX_MAX_VM_DYNAMIC_OBJECTS))
+  {
+    rv = VMS_EraseData(ObjectId - KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS);
+  }
+  /* A WARNING was generated ==> Not an error */
+  if ((rv == VMS_NOERROR) || (rv == VMS_WARNING))
+  {
+    e_ret_status = CKR_OK;
+  }
+  else
+  {
+    e_ret_status = CKR_DEVICE_MEMORY;
+  }
+
+  KMS_PlatfObjects_VmDynamicObjectList();
+
+  return e_ret_status;
+}
+#endif /* KMS_VM_DYNAMIC_ENABLED */
 
 /**
   * @}

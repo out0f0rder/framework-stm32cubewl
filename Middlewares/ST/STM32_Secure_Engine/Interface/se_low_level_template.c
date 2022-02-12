@@ -204,22 +204,39 @@ SE_ErrorStatus SE_LL_Restore_Enable_Irq(uint32_t *pIrqState, uint32_t IrqStateNb
   * @}
   */
 
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
 /* Stop placing data in specified section*/
 #if defined(__ICCARM__)
 #pragma default_function_attributes =
 #endif /* __ICCARM__ */
+
+/** @addtogroup SE_LOCK_KEYS_Exported_Functions
+  * @{
+  */
+
+/**
+  * @brief  Lock the embedded keys used by SBSFU
+  * @param  None
+  * @retval SE_ErrorStatus SE_SUCCESS if successful, SE_ERROR otherwise
+  */
+SE_ErrorStatus SE_LL_Lock_Keys(void)
+{
+  return SE_SUCCESS;
+}
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
+
+/**
+  * @}
+  */
 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

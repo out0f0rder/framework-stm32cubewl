@@ -53,6 +53,8 @@ void            KMS_PlatfObjects_NvmStaticRange(uint32_t *pMin, uint32_t *pMax);
 kms_obj_keyhead_t *KMS_PlatfObjects_NvmStaticObject(uint32_t hKey);
 void            KMS_PlatfObjects_NvmDynamicRange(uint32_t *pMin, uint32_t *pMax);
 kms_obj_keyhead_t *KMS_PlatfObjects_NvmDynamicObject(uint32_t hKey);
+void            KMS_PlatfObjects_VmDynamicRange(uint32_t *pMin, uint32_t *pMax);
+kms_obj_keyhead_t *KMS_PlatfObjects_VmDynamicObject(uint32_t hKey);
 #ifdef KMS_EXT_TOKEN_ENABLED
 void            KMS_PlatfObjects_ExtTokenStaticRange(uint32_t *pMin, uint32_t *pMax);
 void            KMS_PlatfObjects_ExtTokenDynamicRange(uint32_t *pMin, uint32_t *pMax);
@@ -60,6 +62,8 @@ void            KMS_PlatfObjects_ExtTokenDynamicRange(uint32_t *pMin, uint32_t *
 CK_RV           KMS_PlatfObjects_AllocateAndStore(kms_obj_keyhead_no_blob_t *pBlob, CK_OBJECT_HANDLE_PTR pObjId);
 CK_RV           KMS_PlatfObjects_NvmStoreObject(uint32_t ObjectId, uint8_t *pObjectToAdd, uint32_t ObjectSize);
 CK_RV           KMS_PlatfObjects_NvmRemoveObject(uint32_t ObjectId);
+CK_RV           KMS_PlatfObjects_VmStoreObject(uint32_t ObjectId, uint8_t *pObjectToAdd, uint32_t ObjectSize);
+CK_RV           KMS_PlatfObjects_VmRemoveObject(uint32_t ObjectId);
 
 #if defined(KMS_IMPORT_BLOB)
 CK_ULONG        KMS_PlatfObjects_GetBlobVerifyKey(void);

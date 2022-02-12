@@ -68,15 +68,12 @@ extern "C" {
 
 /* Next ranges are kept for future use (additional crypto schemes, additional user code) */
 #define SE_APP_GET_ACTIVE_FW_INFO                 (0x20UL)    /*!< User Application retrieves an Active Firmware Info */
-#define SE_APP_VALIDATE_FW                        (0x21UL)    /*!< User Application valiadtes an Active Firmware */
+#define SE_APP_VALIDATE_FW                        (0x21UL)    /*!< User Application validates an Active Firmware */
+#define SE_APP_GET_FW_STATE                       (0x22UL)    /*!< User Application retreives an Active Firmware state */
 
 /* System configuration access (NVIC...) */
 #define SE_SYS_SAVE_DISABLE_IRQ                   (0x60UL)    /*!< System command to disable IRQ, returning to caller IRQ configuration */
 #define SE_SYS_RESTORE_ENABLE_IRQ                 (0x61UL)    /*!< System command to enable IRQ with given configuration */
-
-/* BootInfo access functions (bootloader only) */
-#define SE_BOOT_INFO_READ_ALL_ID                  (0x80UL)    /*!< SE_INFO_ReadBootInfo (bootloader only) */
-#define SE_BOOT_INFO_WRITE_ALL_ID                 (0x81UL)    /*!< SE_INFO_WriteBootInfo (bootloader only) */
 
 /* SE IMG interface (bootloader only) */
 #define SE_IMG_READ                               (0x92UL)    /*!< SFU reads a Flash protected area (bootloader only) */
@@ -90,6 +87,9 @@ extern "C" {
 
 /* Configure "On The Fly DECryption" mechanism (OTFDEC) for external FLASH */
 #define SE_EXTFLASH_DECRYPT_INIT                  (0x110UL)   /*!< SFU lock part of SE services (bootloader only) */
+
+/* CM0 stack or FUS update process */
+#define SE_CM0_UPDATE                             (0x120UL)   /*!< Wireless stack or FUS update managed by CM0 */
 
 /* Secure Engine add-on middle wares */
 #define SE_MW_ADDON_MSB_MASK     (0x70000000U)         /*!< SE add-ons MSB bits reserved for add-on middlewares IDs */
@@ -150,7 +150,7 @@ extern uint32_t SeCallGateStatusParam;
 /** @addtogroup SE_CALLGATE_Exported_Functions
   * @{
   */
-SE_ErrorStatus SE_CallGate(SE_FunctionIDTypeDef eID, SE_StatusTypeDef * const peSE_Status, uint32_t PrimaskValue, ...);
+SE_ErrorStatus SE_CallGate(SE_FunctionIDTypeDef eID, SE_StatusTypeDef *const peSE_Status, uint32_t PrimaskValue, ...);
 
 /**
   * @}

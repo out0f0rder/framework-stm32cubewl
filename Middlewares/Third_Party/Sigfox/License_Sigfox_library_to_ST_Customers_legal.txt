@@ -1,5 +1,5 @@
-By downloading, or attempting to download, the SIGFOX protocol library "SFX_LIB_V2.8.0_SE_FDL_MON.a" and/or 
-"SFX_ADDON_RFP_V0.6.0_SE_FDL_MON.a" , you are hereby informed and you acknowledge and agree that any use of 
+By downloading, or attempting to download, the SIGFOX protocol library "SFX_LIB_V2.10.0_SE_FDL_MON.a" and/or 
+"SFX_ADDON_RFP_V0.8.0_SE_FDL_MON_ASYNC.a" , you are hereby informed and you acknowledge and agree that any use of 
 the licensed materials is subject to all terms and conditions required by SIGFOX and listed below:
 • You shall 
   o respect the Partner Certification Process, described in the SIGFOX developer platform at  

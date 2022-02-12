@@ -54,6 +54,9 @@ extern "C" {
 #define KMS_INDEX_MIN_NVM_DYNAMIC_OBJECTS            50UL   /*!< NVM dynamic objects min ID */
 #define KMS_INDEX_MAX_NVM_DYNAMIC_OBJECTS            69UL   /*!< NVM dynamic objects max ID */
 
+#define KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS             50UL   /*!< VM dynamic objects min ID */
+#define KMS_INDEX_MAX_VM_DYNAMIC_OBJECTS             69UL   /*!< VM dynamic objects max ID */
+
 /* When EXTERNAL TOKEN is not supported the below values can be commented */
 #define KMS_INDEX_MIN_EXT_TOKEN_STATIC_OBJECTS        70UL  /*!< External token static objects min ID */
 #define KMS_INDEX_MAX_EXT_TOKEN_STATIC_OBJECTS        89UL  /*!< External token static objects max ID */
@@ -83,7 +86,8 @@ extern "C" {
   * @brief  KMS embedded objects definition
   * @note   Must contains KMS blob verification and decryption keys
   */
-const kms_obj_keyhead_t * const KMS_PlatfObjects_EmbeddedList[KMS_INDEX_MAX_EMBEDDED_OBJECTS - KMS_INDEX_MIN_EMBEDDED_OBJECTS + 1] =
+const kms_obj_keyhead_t *const KMS_PlatfObjects_EmbeddedList[KMS_INDEX_MAX_EMBEDDED_OBJECTS -
+                                                             KMS_INDEX_MIN_EMBEDDED_OBJECTS + 1] =
 {
   (kms_obj_keyhead_t *) NULL,       /* Index = 1 */
   (kms_obj_keyhead_t *) NULL,       /* Index = 2 */

@@ -14,7 +14,7 @@
     !!!!  DO NOT MODIFY THIS FILE !!!!
 
   ----------------------------------------------
- \endif
+ \endif
   ----------------------------------------------*/
 
 /*!
@@ -37,6 +37,9 @@
  * This file includes the user's functions to send data on sigfox's network,
  * such as sending a bit, a frame or a sigfox out of band message.
  */
+
+#ifndef SIGFOX_API_H
+#define SIGFOX_API_H
 
 /* ################################## VERSION INFORMATION ################################## */
 /* This library supports FH spectrum access to be compliant with FCC standards. */
@@ -83,15 +86,7 @@
 |
 |  ------------------------------------------------------------------------------------------------------------------------------------- */
 
-#ifndef __SIGFOX_API_H__
-#define __SIGFOX_API_H__
 
-
-
-#ifdef __cplusplus
- extern "C" {
-#endif
-   
 #define SFX_ERR_NONE                                             (sfx_u8)(0x00) /*!< No error - to be used for MANUF_ERROR_CODES and SIGFOX_ERROR_CODES */
 
 /*
@@ -105,6 +100,8 @@
 #define SFX_ERR_API_OPEN_GET_NVMEM_MEMORY_OVERLAP                (sfx_u8)(0x12) /*!< MCU_API_get_nv_mem overlap the memory */
 #define SFX_ERR_API_OPEN_RC_PTR                                  (sfx_u8)(0x13) /*!< RC pointer is NULL */
 #define SFX_ERR_API_OPEN_MACRO_CHANNEL_WIDTH                     (sfx_u8)(0x14) /*!< This macro channel width is not authorized by Sigfox Lib, check your RC configuration */
+#define SFX_ERR_API_MSG_COUNTER_ROLLOVER_NOT_SUPPORTED           (sfx_u8)(0x16) /*!< Message counter rollover retrieved not supported */
+#define SFX_ERR_API_MSG_COUNTER_ROLLOVER_NOT_ALLOWED_IN_PAYLOAD_ENC (sfx_u8)(0x17) /*!< Message counter rollover retrieved not supported in payload crypted case */
 
 #define SFX_ERR_API_CLOSE_FREE                                   (sfx_u8)(0x20) /*!< Error occurs during the closing of the Sigfox Library : error on MCU_API_free */
 #define SFX_ERR_API_CLOSE_STATE                                  (sfx_u8)(0x21) /*!< Error occurs during the closing of the Sigfox Library : error on library state */
@@ -138,6 +135,7 @@
 #define SFX_ERR_API_GET_INITIAL_PAC                              (sfx_u8)(0x5B) /*!< Error occurs when trying to retrieve the PAC : check the manuf error code to get the error */
 #define SFX_ERR_API_GET_VERSION                                  (sfx_u8)(0x5C) /*!< Error occurs when trying to retrieve the version : check the manuf error code to get the error */
 #define SFX_ERR_API_GET_VERSION_WRONG_TYPE                       (sfx_u8)(0x5D) /*!< Error occurs when trying to retrieve the version : wrong version type - see the enum sfx_version_type_t */
+#define SFX_ERR_API_GET_INFO_REQUEST_TYPE_NOT_SUPPORTED          (sfx_u8)(0x5F) /*!< Error occurs when trying to ask for an information type which is not supported in SIGFOX_API_get_info */
 
 #define SFX_ERR_INT_EXECUTE_COM_SEQUENCE_STATE                   (sfx_u8)(0x60) /*!< State is not READY, library should be opened before */
 #define SFX_ERR_INT_EXECUTE_COM_SEQUENCE_NVM_STORAGE_MESSAGE     (sfx_u8)(0x61) /*!< Error occurs during the nvm storage used for uplink transmission : check the manuf error code  */
@@ -205,7 +203,7 @@
 
 
 #define SFX_ERR_INT_DOWNLINK_CONFIGURATION                                  (sfx_u8)(0xE0) /*!< Error occurs when trying to configure downlink : check the manuf error code */
-
+#define SFX_ERR_INT_GET_MSG_COUNTER_ROLLOVER                                (sfx_u8)(0xE1) /*!< Error occurs when trying to configure msg counter rollover : check the manuf error code */
 
 /** @}*/
 
@@ -332,6 +330,35 @@
 #define PAC_LENGTH     (sfx_u8)(8) /* Size of device initial PAC */
 
 /********************************
+ * \enum
+ * \brief Enum Request types to be
+ *        used in SIGFOX_API_get_info 
+ *******************************/
+enum sfx_enum_request_types
+{
+    LBT_VALUES                       = (sfx_u8)(0),         /*!< Request type of CS attempts and nb frames sent */ 
+    DL_FAILED_CRC_FRAMES_COUNT       = (sfx_u8)(1),         /*!< Request type of the nb of Failed CRC received in DL */
+    DL_OTHER_DEVICE_FRAMES_COUNT     = (sfx_u8)(2),         /*!< Request type of the nb of other device frames received in DL */
+    MONARCH_DETECTION_TIMEOUT_REASON = (sfx_u8)(3),         /*!< Request type of the reason of failed timeout beacon detection */
+
+    /* Always keep this line at then end */
+    MAX_ENUM_REQUEST_TYPES,
+};
+
+/********************************
+ * \enum
+ * \brief Enum of the Monarch beacon timeout reasons 
+ * Those values are returned from the SIGFOX_API_get_info()
+ * call when request type is MONARCH_DETECTION_TIMEOUT_REASON
+ *******************************/
+enum sfx_enum_monarch_detection_timeout_reason
+{
+    BEACON_DETECTION_NO_FAILURE   = (sfx_u8)(0),         /*!< Initial value - when the RC Scan has not been executed yet or when there is no failure on beacon detection */
+    FIRST_PATTERN_NOT_DETECTED    = (sfx_u8)(1),         /*!< Monarch beacon detection failed because the first pattern was not received */ 
+    SECOND_PATTERN_NOT_DETECTED   = (sfx_u8)(2),         /*!< Monarch beacon detection failed because the second pattern was not received */ 
+};
+ 
+/********************************
  * \enum sfx_spectrum_access_t
  * \brief Data type for Spectrum Access
  * Define as bit mask value so that we can combine
@@ -415,10 +442,10 @@ typedef enum
 /********************************
  * \enum sfx_nvmem_t
  * \brief Data type for Nv memory access
- * Saving PN and Sequence are mandatory
+ * Saving PN and message counter are mandatory
  * for backend compatibility
  *******************************/
-/* FH information required, seq_num stored in secure_element */
+/* FH information required, msg counter stored in secure_element */
 typedef enum
 {
     SFX_NVMEM_PN         = 0, /*!< Index of nv memory for PN */
@@ -492,6 +519,24 @@ typedef struct sfx_rc_t
     sfx_spectrum_access_t spectrum_access; /*!< Spectrum access : can be Duty Cycle, Frequency Hopping or Listen Before Talk */
     sfx_rc_specific_t specific_rc; /*!< Specific radio conf for LBT feature */
 }sfx_rc_t;
+
+/********************************
+ * \enum e_sfx_msg_counter_rollover
+ * \brief Message counter rollover values
+ * supported by Sigfox
+ *******************************/
+typedef enum
+{
+    SFX_MSG_COUNTER_ROLLOVER_NOT_CONFIGURED = 0, /*!< Default value, msg counter rollover must be configured */
+    SFX_MSG_COUNTER_ROLLOVER_128            = 1, /*!< Enum value for rollover 128 */
+    SFX_MSG_COUNTER_ROLLOVER_256            = 2, /*!< Enum value for rollover 256 */
+    SFX_MSG_COUNTER_ROLLOVER_512            = 3, /*!< Enum value for rollover 512 */
+    SFX_MSG_COUNTER_ROLLOVER_1024           = 4, /*!< Enum value for rollover 1024 */
+    SFX_MSG_COUNTER_ROLLOVER_2048           = 5, /*!< Enum value for rollover 2048 */
+    SFX_MSG_COUNTER_ROLLOVER_4096           = 6, /*!< Enum value for rollover 4096 */
+    MAX_MSG_COUNTER_ROLLOVER                = 7, /*!< Max supported msg counter rollover */
+}e_sfx_msg_counter_rollover;
+
 
 /*
  ***************************************
@@ -572,7 +617,7 @@ sfx_error_t SIGFOX_API_close(void);
  *******************************************************************/
 sfx_error_t SIGFOX_API_send_frame(sfx_u8* customer_data,
                                   sfx_u8 customer_data_length,
-                                  sfx_u8* customer_response,
+                                  /*@null@*/ /*@out@*/sfx_u8* customer_response,
                                   sfx_u8 tx_mode,
                                   sfx_bool initiate_downlink_flag);
 
@@ -608,7 +653,7 @@ sfx_error_t SIGFOX_API_send_frame(sfx_u8* customer_data,
  *
  *******************************************************************/
 sfx_error_t SIGFOX_API_send_bit(sfx_bool bit_value,
-                                sfx_u8* customer_response,
+                                /*@null@*/sfx_u8* customer_response,
                                 sfx_u8 tx_mode,
                                 sfx_bool initiate_downlink_flag);
 
@@ -687,8 +732,8 @@ sfx_error_t SIGFOX_API_send_outofband(sfx_oob_enum_t oob_type);
  * <B>DC (Duty Cycle)</B>: This function has no effect in DC spectrum access ( used for the ETSI standard ).</B><BR>
  *
  * <B>LBT (Listen Before Talk)</B> : Carrier Sense feature for the First frame can be configured.
- *           - config_word[0] : number of attempts to send the first frame [ has to be greater or equal to 1]
- *           - config_word[1] : maximum carrier sense sliding window (in ms) [ has to be greater than 6 ms ( CS_MIN_DURATION_IN_MS + 1 ) ]
+ *           - config_word[0] : number of attempts to send the first frame [ has to be greater or equal to 1, maximum value  = 0xFFFF ]
+ *           - config_word[1] : maximum carrier sense sliding window (in ms) [ has to be greater than 6 ms ( CS_MIN_DURATION_IN_MS + 1 ), maximum value  = 0xFFFF ]
  *           - config_word[2] :
  *                  . bit 8   : set the value to 1 to indicate that the device will use the full operationnal radio band.( 192kHz )
  *                  . bit 7-3 : number of Carrier Sense attempts.
@@ -712,7 +757,7 @@ sfx_error_t SIGFOX_API_send_outofband(sfx_oob_enum_t oob_type);
  *
  *******************************************************************/
 sfx_error_t SIGFOX_API_set_std_config(sfx_u32 config_words[3],
-                                      sfx_bool timer_enable);
+                                      /*@unused@*/sfx_bool timer_enable);
 
 /*!******************************************************************
  * \fn sfx_error_t SIGFOX_API_start_continuous_transmission(sfx_u32 frequency, sfx_modulation_type_t type);
@@ -797,7 +842,7 @@ sfx_error_t SIGFOX_API_send_test_frame(sfx_u32 frequency, sfx_u8* customer_data,
  *
  *  SIGFOX_ERROR_CODE for this function : SFX_ERR_NONE and SFX_ERR_API_RECEIVE_TEST_FRAME_xx
  *******************************************************************/
-sfx_error_t SIGFOX_API_receive_test_frame(sfx_u32 frequency, sfx_authentication_mode_t mode, sfx_u8* buffer, sfx_u8 timeout, sfx_s16* rssi);
+sfx_error_t SIGFOX_API_receive_test_frame(sfx_u32 frequency, sfx_authentication_mode_t mode,  sfx_u8* buffer, sfx_u8 timeout, sfx_s16* rssi);
 
 /*!******************************************************************
  * \fn sfx_error_t SIGFOX_API_get_version(sfx_u8 **version, sfx_u8 *size, sfx_version_type_t type)
@@ -821,13 +866,26 @@ sfx_error_t SIGFOX_API_get_version(sfx_u8** version, sfx_u8* size, sfx_version_t
 
 /*!******************************************************************
  * \fn sfx_error_t SIGFOX_API_get_info(sfx_u8* returned_info);
- * \brief This function is to return info on send frame depending on
- * the mode you're using.<BR>
- * <B> In DC and FH :</B> returned_info is always 0.<BR>
- * <B> In LBT :</B> returned_info = bit[7-3]: Carrier Sense attempts
- * and bit[2-0]: Number of frames sent
+ * \brief This function returns internal Sigfox Library information 
+ *        depending on the request type ( mentionned in sfx_enum_request_types )
  *
- * \param[out] sfx_u8* returned_info            Returned value by library
+ * If request type is : 
+ *
+ *  + LBT_VALUES : only used if access spectrum is LBT : returned information
+ *                 bit[7-3]: Carrier Sense attempts
+ *                 bit[2-0]: Number of frames sent 
+ *
+ *  + DL_FAILED_CRC_FRAMES_COUNT : returned information : a counter of the number of 
+ *                 frames received with wrong CRC during the listening window. 
+ *
+ *  + DL_OTHER_DEVICE_FRAMES_COUNT : returned information : a counter of the number of 
+ *                 frames received from other devices during the listening window. 
+ *
+ *  + MONARCH_DETECTION_TIMEOUT_REASON : returned information : the reason of a failed in
+ *                 the monarch beacon detection (see sfx_enum_monarch_detection_timeout_reason) 
+ *
+ * \param[in/out] sfx_u8* info  Input = request type
+ *                              Output = information
  *
  * \retval  The sfx_error_t is composed of the following :
  *
@@ -840,7 +898,7 @@ sfx_error_t SIGFOX_API_get_version(sfx_u8** version, sfx_u8* size, sfx_version_t
  *  SIGFOX_ERROR_CODE for this function : SFX_ERR_NONE
  *
  *******************************************************************/
-sfx_error_t SIGFOX_API_get_info(sfx_u8* returned_info);
+sfx_error_t SIGFOX_API_get_info(sfx_u8* info);
 
 /*!******************************************************************
  * \fn sfx_error_t SIGFOX_API_get_device_id(sfx_u8 *dev_id)
@@ -888,13 +946,13 @@ sfx_error_t SIGFOX_API_get_initial_pac(sfx_u8* initial_pac);
  * \fn sfx_error_t SIGFOX_API_set_rc_sync_period(sfx_u16 rc_sync_period)
  * \brief Set the period for transmission of RC Sync frame
  * By default, when payload is encrypted, a RC Sync frame is transmitted by the device
- * every 4096 messages transmissions (ie. when the sequence number loops to 0) to
+ * every 4096 messages transmissions (ie. when the message counter loops to 0) to
  * 're-synchronize' the device with the backend (from a payload encryption point of view).
  * This transmission period could be reduced through this function. Then, a RC Sync frame
  * will be transmitted every 'rc_sync_period' transmissions of a 'normal' frame.
  * The value 0 corresponds to the default behavior, ie a RC Sync frame transmitted every
  * 4096 messages transmissions.
- * As sequence number is on 12 bits, setting a rc_sync_period with a value more than (4095 - 1)
+ * As message counter is on 12 bits, setting a rc_sync_period with a value more than (4095 - 1)
  * will return an error.
  *
  * \param[in] sfx_u16 rollover_counter_period    Transmission period of the RC Sync frame (in number of 'normal' frames)
@@ -910,8 +968,4 @@ sfx_error_t SIGFOX_API_get_initial_pac(sfx_u8* initial_pac);
  *******************************************************************/
 sfx_error_t SIGFOX_API_set_rc_sync_period(sfx_u16 rc_sync_period);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* __ST_SIGFOX_API_H__ */
+#endif /* SIGFOX_API_H */

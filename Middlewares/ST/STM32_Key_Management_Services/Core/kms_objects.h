@@ -49,6 +49,7 @@ typedef enum
   KMS_OBJECT_RANGE_EMBEDDED = 0,              /*!< Objects embedded in code at compilation time */
   KMS_OBJECT_RANGE_NVM_STATIC_ID,             /*!< Objects stored in NVM with Static IDs */
   KMS_OBJECT_RANGE_NVM_DYNAMIC_ID,            /*!< Objects stored in NVM with Dynamic IDs */
+  KMS_OBJECT_RANGE_VM_DYNAMIC_ID,             /*!< Objects stored in VM with Dynamic IDs */
   KMS_OBJECT_RANGE_EXT_TOKEN_STATIC_ID,       /*!< Objects stored in external token with Static IDs */
   KMS_OBJECT_RANGE_EXT_TOKEN_DYNAMIC_ID,      /*!< Objects stored in external token with Dynamic IDs */
   KMS_OBJECT_RANGE_UNKNOWN                    /*!< Unknown objects */

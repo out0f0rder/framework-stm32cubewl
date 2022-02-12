@@ -24,7 +24,8 @@
 #include "kms_init.h"                   /* KMS session services */
 #include "kms_objects.h"                /* KMS object management services */
 
-#include "kms_nvm_storage.h"            /* KMS storage services */
+#include "kms_nvm_storage.h"            /* KMS NVM storage services */
+#include "kms_vm_storage.h"             /* KMS VM storage services */
 #include "kms_platf_objects.h"          /* KMS platform objects services */
 #include "kms_low_level.h"              /* Flash access to read blob */
 #include "kms_blob_metadata.h"          /* Blob header definitions */
@@ -114,7 +115,7 @@ CK_RV  read_next_chunk(kms_importblob_ctx_t *pCtx,
 /** @addtogroup KMS_OBJECTS_Private_Functions Private Functions
   * @{
   */
-#ifdef KMS_NVM_DYNAMIC_ENABLED
+#if defined(KMS_NVM_DYNAMIC_ENABLED) || defined(KMS_VM_DYNAMIC_ENABLED)
 /**
   * @brief  Fill CK_ATTRIBUTE TLV elements
   * @param  pTemp       CK_ATTRIBUTE pointer
@@ -132,7 +133,7 @@ static inline void fill_TLV(CK_ATTRIBUTE_PTR  pTemp,
   pTemp->pValue = pValue;
   pTemp->ulValueLen = ulValueLen;
 }
-#endif  /* KMS_NVM_DYNAMIC_ENABLED */
+#endif  /* KMS_NVM_DYNAMIC_ENABLED || KMS_VM_DYNAMIC_ENABLED */
 
 #if defined(KMS_IMPORT_BLOB)
 /**
@@ -150,6 +151,7 @@ static CK_RV authenticate_blob_header(kms_importblob_ctx_t *pCtx,
                                       uint8_t *pBlobInFlash)
 {
   CK_RV e_ret_status;
+  CK_RV e_authenticate_status = CKR_SIGNATURE_INVALID;
   CK_SESSION_HANDLE session;
   CK_MECHANISM smech;
   CK_ULONG obj_id_index;
@@ -187,7 +189,40 @@ static CK_RV authenticate_blob_header(kms_importblob_ctx_t *pCtx,
     (void)KMS_CloseSession(session);
   }
 
-  return e_ret_status;
+  /* Double Check to avoid basic fault injection */
+  if (e_ret_status == CKR_OK)
+  {
+    /* Open session */
+    e_ret_status = KMS_OpenSession(0, CKF_SERIAL_SESSION, NULL, 0, &session);
+    if (e_ret_status == CKR_OK)
+    {
+      /* Verify signature */
+      obj_id_index = KMS_PlatfObjects_GetBlobVerifyKey();
+      smech.pParameter = NULL;
+      smech.ulParameterLen = 0;
+      smech.mechanism = CKM_ECDSA_SHA256;
+
+      if (KMS_VerifyInit(session, &smech, obj_id_index) != CKR_OK)
+      {
+        e_ret_status = CKR_FUNCTION_FAILED;
+      }
+      else
+      {
+        blob_hdr_mac_add = (CK_ULONG)(&(pBlobHeader->HeaderMAC[0]));
+        blob_hdr_add = (CK_ULONG)pBlobHeader;
+        if (KMS_Verify(session,
+                       (CK_BYTE_PTR)pBlobHeader, blob_hdr_mac_add - blob_hdr_add,
+                       (CK_BYTE_PTR)(uint32_t) &(pBlobHeader->HeaderMAC[0]),
+                       (CK_ULONG)KMS_BLOB_MAC_LEN) == CKR_OK)
+        {
+          e_authenticate_status = CKR_OK;
+        }
+      }
+      (void)KMS_CloseSession(session);
+    }
+  }
+
+  return e_authenticate_status;
 }
 #endif /* KMS_IMPORT_BLOB */
 
@@ -214,6 +249,7 @@ static CK_RV authenticate_blob(kms_importblob_ctx_t *pCtx,
                                uint8_t *pBlobInFlash)
 {
   CK_RV        e_ret_status;
+  CK_RV e_authenticate_status = CKR_SIGNATURE_INVALID;
   uint8_t *pfw_source_address = (uint8_t *)0xFFFFFFFFU;
   uint8_t fw_tag_output[KMS_BLOB_TAG_LEN];
   uint32_t fw_decrypted_total_size = 0;
@@ -313,7 +349,7 @@ static CK_RV authenticate_blob(kms_importblob_ctx_t *pCtx,
 
   if ((e_ret_status == CKR_OK))
   {
-    /* Do the finalizfinalization, check the authentication TAG */
+    /* Do the finalization, check the authentication TAG */
     fw_tag_len = KMS_BLOB_TAG_LEN; /* PKCS#11 - Section 5.2: Buffer handling compliance */
     e_ret_status =  KMS_DecryptFinal(aessession, fw_tag_output, (CK_ULONG_PTR)(uint32_t)&fw_tag_len);
 
@@ -333,7 +369,16 @@ static CK_RV authenticate_blob(kms_importblob_ctx_t *pCtx,
 
   (void)KMS_CloseSession(aessession);
   (void)KMS_CloseSession(digsession);
-  return e_ret_status;
+
+  if (e_ret_status == CKR_OK)
+  {
+    if ((fw_tag_len == KMS_BLOB_TAG_LEN) && (memcmp(fw_tag_output, pBlobHeader->BlobTag, KMS_BLOB_TAG_LEN) == 0))
+    {
+      e_authenticate_status = CKR_OK;
+    }
+  }
+
+  return e_authenticate_status;
 }
 #endif /* KMS_IMPORT_BLOB */
 
@@ -745,6 +790,16 @@ kms_obj_keyhead_t *KMS_Objects_GetPointer(CK_OBJECT_HANDLE hKey)
     }
 #endif  /* KMS_NVM_DYNAMIC_ENABLED */
 #endif  /* KMS_NVM_ENABLED */
+
+#ifdef KMS_VM_DYNAMIC_ENABLED
+    /* Read the available vm slots from the platform */
+    KMS_PlatfObjects_VmDynamicRange(&min_slot, &max_slot);
+    /* If hKey is in the range of vm keys */
+    if ((hKey <= max_slot) && (hKey >= min_slot))
+    {
+      p_object = KMS_PlatfObjects_VmDynamicObject(hKey);
+    }
+#endif  /* KMS_VM_DYNAMIC_ENABLED */
   }
 
   /* Double Check to avoid basic fault injection : check that the key has not been Locked */
@@ -754,7 +809,7 @@ kms_obj_keyhead_t *KMS_Objects_GetPointer(CK_OBJECT_HANDLE hKey)
   }
   else
   {
-    /* hKey not in embedded nor in nvm, or Locked */
+    /* hKey not in embedded nor in nvm nor in vm, or Locked */
     return NULL;
   }
 }
@@ -796,6 +851,16 @@ kms_obj_range_t  KMS_Objects_GetRange(CK_OBJECT_HANDLE hKey)
   }
 #endif  /* KMS_NVM_DYNAMIC_ENABLED */
 #endif  /* KMS_NVM_ENABLED */
+
+#ifdef KMS_VM_DYNAMIC_ENABLED
+  /* Read the available vm slots from the platform */
+  KMS_PlatfObjects_VmDynamicRange(&MinSlot, &MaxSlot);
+  /* If hKey is in the range of vm keys */
+  if ((hKey <= MaxSlot) && (hKey >= MinSlot))
+  {
+    return (KMS_OBJECT_RANGE_VM_DYNAMIC_ID);
+  }
+#endif  /* KMS_VM_DYNAMIC_ENABLED */
 
 #ifdef KMS_EXT_TOKEN_ENABLED
   /* Read the available external token slots from the platform */
@@ -1024,6 +1089,9 @@ CK_RV KMS_FindObjectsFromTemplate(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_P
   CK_OBJECT_HANDLE h_nvmd_obj_min, h_nvmd_obj_max;
 #endif /* KMS_NVM_DYNAMIC_ENABLED */
 #endif /* KMS_NVM_ENABLED */
+#ifdef KMS_VM_DYNAMIC_ENABLED
+  CK_OBJECT_HANDLE h_vmd_obj_min, h_vmd_obj_max;
+#endif /* KMS_VM_DYNAMIC_ENABLED */
   kms_obj_keyhead_t *p_pkms_object;
   uint32_t template_index;
   CK_ULONG_PTR p_working_obj_count;
@@ -1042,6 +1110,9 @@ CK_RV KMS_FindObjectsFromTemplate(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_P
   KMS_PlatfObjects_NvmDynamicRange(&h_nvmd_obj_min, &h_nvmd_obj_max);
 #endif /* KMS_NVM_DYNAMIC_ENABLED */
 #endif /* KMS_NVM_ENABLED */
+#ifdef KMS_VM_DYNAMIC_ENABLED
+  KMS_PlatfObjects_VmDynamicRange(&h_vmd_obj_min, &h_vmd_obj_max);
+#endif /* KMS_VM_DYNAMIC_ENABLED */
 
   h_object = h_emb_obj_min;
   state = KMS_OBJECT_RANGE_EMBEDDED;
@@ -1050,28 +1121,9 @@ CK_RV KMS_FindObjectsFromTemplate(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_P
          && (h_object != KMS_HANDLE_KEY_NOT_KNOWN)
          && (e_ret_status == CKR_OK))
   {
-    switch (state)
-    {
-      case KMS_OBJECT_RANGE_EMBEDDED:
-        /* Get embedded object pointer */
-        p_pkms_object = KMS_PlatfObjects_EmbeddedObject(h_object);
-        break;
-#if defined(KMS_NVM_ENABLED)
-      case KMS_OBJECT_RANGE_NVM_STATIC_ID:
-        /* Get NVM static ID object pointer */
-        p_pkms_object = KMS_PlatfObjects_NvmStaticObject(h_object);
-        break;
-#if defined(KMS_NVM_DYNAMIC_ENABLED)
-      case KMS_OBJECT_RANGE_NVM_DYNAMIC_ID:
-        /* Get NVM dynamic ID object pointer */
-        p_pkms_object = KMS_PlatfObjects_NvmDynamicObject(h_object);
-        break;
-#endif /* KMS_NVM_DYNAMIC_ENABLED */
-#endif /* KMS_NVM_ENABLED */
-      default:
-        e_ret_status = CKR_GENERAL_ERROR;
-        break;
-    }
+    /* Read the key value from the Key Handle                 */
+    /* Key Handle is the index to one of static or nvm        */
+    p_pkms_object = KMS_Objects_GetPointer(h_object);
 
     if ((p_pkms_object != NULL) && (e_ret_status == CKR_OK))
     {
@@ -1125,6 +1177,10 @@ CK_RV KMS_FindObjectsFromTemplate(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_P
           /* Reached end of range, go to next one */
           state = KMS_OBJECT_RANGE_NVM_STATIC_ID;
           h_object = h_nvms_obj_min;
+#elif defined(KMS_VM_DYNAMIC_ENABLED)
+          /* Reached end of range, go to next one */
+          state = KMS_OBJECT_RANGE_VM_DYNAMIC_ID;
+          h_object = h_vmd_obj_min;
 #else /* KMS_NVM_ENABLED */
           /* Reached end of range, stop loop */
           h_object = KMS_HANDLE_KEY_NOT_KNOWN;
@@ -1139,6 +1195,10 @@ CK_RV KMS_FindObjectsFromTemplate(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_P
           /* Reached end of range, go to next one */
           state = KMS_OBJECT_RANGE_NVM_DYNAMIC_ID;
           h_object = h_nvmd_obj_min;
+#elif defined(KMS_VM_DYNAMIC_ENABLED)
+          /* Reached end of range, go to next one */
+          state = KMS_OBJECT_RANGE_VM_DYNAMIC_ID;
+          h_object = h_vmd_obj_min;
 #else /* KMS_NVM_DYNAMIC_ENABLED */
           /* Reached end of range, stop loop */
           h_object = KMS_HANDLE_KEY_NOT_KNOWN;
@@ -1149,12 +1209,27 @@ CK_RV KMS_FindObjectsFromTemplate(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_P
       case KMS_OBJECT_RANGE_NVM_DYNAMIC_ID:
         if (h_object > h_nvmd_obj_max)
         {
+#ifdef KMS_VM_DYNAMIC_ENABLED
+          /* Reached end of range, go to next one */
+          state = KMS_OBJECT_RANGE_VM_DYNAMIC_ID;
+          h_object = h_vmd_obj_min;
+#else /* KMS_VM_DYNAMIC_ENABLED */
           /* Reached end of range, stop loop */
           h_object = KMS_HANDLE_KEY_NOT_KNOWN;
+#endif /* KMS_VM_DYNAMIC_ENABLED */
         }
         break;
 #endif /* KMS_NVM_DYNAMIC_ENABLED */
 #endif /* KMS_NVM_ENABLED */
+#ifdef KMS_VM_DYNAMIC_ENABLED
+      case KMS_OBJECT_RANGE_VM_DYNAMIC_ID:
+        if (h_object > h_vmd_obj_max)
+        {
+          /* Reached end of range, stop loop */
+          h_object = KMS_HANDLE_KEY_NOT_KNOWN;
+        }
+        break;
+#endif /* KMS_VM_DYNAMIC_ENABLED */
       default:
         e_ret_status = CKR_GENERAL_ERROR;
         break;
@@ -1331,6 +1406,7 @@ CK_RV  KMS_Objects_ImportBlob(CK_BYTE_PTR pHdr, CK_BYTE_PTR pFlash)
 {
 #if defined(KMS_IMPORT_BLOB)
   CK_RV e_ret_status = CKR_GENERAL_ERROR;
+  CK_RV e_install_status = CKR_GENERAL_ERROR;
   uint32_t session_index;
   kms_importblob_ctx_t *p_ctx;
 
@@ -1376,15 +1452,22 @@ CK_RV  KMS_Objects_ImportBlob(CK_BYTE_PTR pHdr, CK_BYTE_PTR pFlash)
           /* Check that Blob Authentication is OK */
           if (e_ret_status == CKR_OK)
           {
-            /* Read the Blob & Install it in NVM */
-            e_ret_status = install_blob(p_ctx, (KMS_BlobRawHeaderTypeDef *)(uint32_t)pHdr, pFlash);
+            /* Double Check to avoid basic fault injection */
+            e_ret_status = authenticate_blob_header(p_ctx, (KMS_BlobRawHeaderTypeDef *)(uint32_t)pHdr, pFlash);
+
+            /* Check the Blob header Authentication */
+            if (e_ret_status == CKR_OK)
+            {
+              /* Read the Blob & Install it in NVM */
+              e_install_status = install_blob(p_ctx, (KMS_BlobRawHeaderTypeDef *)(uint32_t)pHdr, pFlash);
+            }
           }
         }
         KMS_Free(KMS_SESSION_ID_INVALID, p_ctx);
       }
     }
   }
-  return e_ret_status;
+  return e_install_status;
 #else /* KMS_IMPORT_BLOB */
   return CKR_FUNCTION_NOT_SUPPORTED;
 #endif /* KMS_IMPORT_BLOB */
@@ -1440,7 +1523,7 @@ CK_RV KMS_Objects_LockServices(CK_ULONG_PTR pServices, CK_ULONG ulCount)
 #endif /* KMS_SE_LOCK_SERVICES */
 }
 
-#ifdef KMS_NVM_DYNAMIC_ENABLED
+#if defined(KMS_NVM_DYNAMIC_ENABLED) || defined(KMS_VM_DYNAMIC_ENABLED)
 /**
   * @brief  Allocate and create a blob object from one or two template(s)
   * @param  hSession session handle
@@ -1509,7 +1592,7 @@ CK_RV KMS_Objects_CreateNStoreBlobFromTemplates(CK_SESSION_HANDLE hSession,
     p_blob->configuration = KMS_ABI_CONFIG_KEYHEAD;
     p_blob->blobs_size = blob_size;
     p_blob->blobs_count = ulCount1 + ulCount2;
-    p_blob->object_id = KMS_HANDLE_KEY_NOT_KNOWN;    /* Updated when inserting object in NVM */
+    p_blob->object_id = KMS_HANDLE_KEY_NOT_KNOWN;    /* Updated when inserting object in NVM / VM */
 
     offset = 0;
     tmp = (uint32_t)(p_blob);
@@ -1544,9 +1627,9 @@ CK_RV KMS_Objects_CreateNStoreBlobFromTemplates(CK_SESSION_HANDLE hSession,
 
   return e_ret_status;
 }
-#endif  /* KMS_NVM_DYNAMIC_ENABLED */
+#endif  /* KMS_NVM_DYNAMIC_ENABLED || KMS_VM_DYNAMIC_ENABLED */
 
-#ifdef KMS_NVM_DYNAMIC_ENABLED
+#if defined(KMS_NVM_DYNAMIC_ENABLED) || defined(KMS_VM_DYNAMIC_ENABLED)
 /**
   * @brief  Create and store blob for AES key
   * @param  hSession session handle
@@ -1616,9 +1699,9 @@ CK_RV KMS_Objects_CreateNStoreBlobForAES(CK_SESSION_HANDLE hSession,
   }
   return e_ret_status;
 }
-#endif  /* KMS_NVM_DYNAMIC_ENABLED */
+#endif  /* KMS_NVM_DYNAMIC_ENABLED || KMS_VM_DYNAMIC_ENABLED */
 
-#ifdef KMS_NVM_DYNAMIC_ENABLED
+#if defined(KMS_NVM_DYNAMIC_ENABLED) || defined(KMS_VM_DYNAMIC_ENABLED)
 /**
   * @brief  Create and store blob for ECC key pair
   * @param  hSession session handle
@@ -1742,7 +1825,7 @@ CK_RV KMS_Objects_CreateNStoreBlobForECCPair(CK_SESSION_HANDLE hSession,
   }
   return e_ret_status;
 }
-#endif  /* KMS_NVM_DYNAMIC_ENABLED */
+#endif  /* KMS_NVM_DYNAMIC_ENABLED || KMS_VM_DYNAMIC_ENABLED */
 
 /**
   * @}

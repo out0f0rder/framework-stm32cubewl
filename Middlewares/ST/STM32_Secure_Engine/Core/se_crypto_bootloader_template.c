@@ -80,8 +80,7 @@
   *        These functions use the generic SE_FwRawHeaderTypeDef structure to fill crypto specific structures.
   * @{
   */
-
-SE_ErrorStatus SE_CRYPTO_Encrypt_Init(SE_FwRawHeaderTypeDef *pxSE_Metadata)
+SE_ErrorStatus SE_CRYPTO_Encrypt_Init(SE_FwRawHeaderTypeDef *pxSE_Metadata, uint32_t SE_FwType)
 {
   /* use the common cypto code from se_crypto_common.c when possible */
 }
@@ -102,7 +101,7 @@ SE_ErrorStatus SE_CRYPTO_Encrypt_Finish(uint8_t *pOutputBuffer, int32_t *pOutput
   /* use the common cypto code from se_crypto_common.c when possible */
 }
 
-SE_ErrorStatus SE_CRYPTO_Decrypt_Init(SE_FwRawHeaderTypeDef *pxSE_Metadata)
+SE_ErrorStatus SE_CRYPTO_Decrypt_Init(SE_FwRawHeaderTypeDef *pxSE_Metadata, uint32_t SE_FwType)
 {
   /* use the common cypto code from se_crypto_common.c when possible */
 }
@@ -118,12 +117,7 @@ SE_ErrorStatus SE_CRYPTO_Decrypt_Finish(uint8_t *pOutputBuffer, int32_t *pOutput
   /* use the common cypto code from se_crypto_common.c when possible */
 }
 
-SE_ErrorStatus SE_CRYPTO_Authenticate_Metadata(SE_FwRawHeaderTypeDef *pxSE_Metadata)
-{
-  /* use the common cypto code from se_crypto_common.c when possible */
-}
-
-SE_ErrorStatus SE_CRYPTO_AuthenticateFW_Init(SE_FwRawHeaderTypeDef *pxSE_Metadata)
+SE_ErrorStatus SE_CRYPTO_AuthenticateFW_Init(SE_FwRawHeaderTypeDef *pxSE_Metadata, uint32_t SE_FwType)
 {
   /* use the common cypto code from se_crypto_common.c when possible */
 }
@@ -136,9 +130,16 @@ SE_ErrorStatus SE_CRYPTO_AuthenticateFW_Append(const uint8_t *pInputBuffer, int3
 
 SE_ErrorStatus SE_CRYPTO_AuthenticateFW_Finish(uint8_t *pOutputBuffer, int32_t *pOutputSize)
 {
+}
+
+SE_ErrorStatus SE_CRYPTO_Authenticate_Metadata(SE_FwRawHeaderTypeDef *pxSE_Metadata)
+{
   /* use the common cypto code from se_crypto_common.c when possible */
 }
 
+void SE_CRYPTO_Lock_CKS_Keys(void)
+{
+}
 
 /**
   * @}

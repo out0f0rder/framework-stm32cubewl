@@ -41,13 +41,14 @@
 
 /* External variables --------------------------------------------------------*/
 #if (!defined (SIGFOX_KMS) || (SIGFOX_KMS == 0))
-
-#if defined(__ICCARM__)
+#if defined(__ARMCC_VERSION)
+ __attribute__((section(".USER_embedded_Keys")))
+#elif defined(__ICCARM__)
 #pragma default_variable_attributes = @ ".USER_embedded_Keys"
 #elif defined(__CC_ARM)
 #pragma arm section rodata = ".USER_embedded_Keys"
-#else
-__attribute__((section(".USER_embedded_Keys")))
+#elif defined(__GNUC__)
+ __attribute__((section(".USER_embedded_Keys.encrypted_sigfox_data")))
 #endif
 
 const
@@ -57,6 +58,7 @@ sfx_u8 encrypted_sigfox_data[] =
   FORMAT_KEY(SIGFOX_KEY),
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
+
 /* Stop placing data in specified section*/
 #if defined(__ICCARM__)
 #pragma default_variable_attributes =

@@ -25,7 +25,8 @@
 #include "kms_dyn_obj.h"                  /* KMS object services */
 
 #include "kms_objects.h"                  /* KMS object management services */
-#include "kms_nvm_storage.h"              /* KMS object storage services */
+#include "kms_nvm_storage.h"              /* KMS NVM object storage services */
+#include "kms_vm_storage.h"               /* KMS VM storage services */
 #include "kms_platf_objects.h"            /* KMS platf objects services */
 #include "kms_mem.h"                      /* KMS memory utilities */
 
@@ -49,24 +50,34 @@
   */
 typedef struct
 {
-#ifdef KMS_NVM_ENABLED
-#ifdef KMS_NVM_DYNAMIC_ENABLED
+#if defined(KMS_NVM_ENABLED) && defined(KMS_NVM_DYNAMIC_ENABLED) && !defined(KMS_VM_DYNAMIC_ENABLED)
   /* Embedded keys + Both NVM flavor keys */
   CK_OBJECT_HANDLE searchHandles[KMS_INDEX_MAX_EMBEDDED_OBJECTS - KMS_INDEX_MIN_EMBEDDED_OBJECTS + 1 \
                                  + KMS_INDEX_MAX_NVM_STATIC_OBJECTS - KMS_INDEX_MIN_NVM_STATIC_OBJECTS + 1 \
                                  + KMS_INDEX_MAX_NVM_DYNAMIC_OBJECTS - KMS_INDEX_MIN_NVM_DYNAMIC_OBJECTS + 1];
-                                 /*!< Found object handles list  */
-#else /* KMS_NVM_DYNAMIC_ENABLED */
+  /*!< Found object handles list  */
+#elif defined(KMS_NVM_ENABLED) && !defined(KMS_NVM_DYNAMIC_ENABLED) && defined(KMS_VM_DYNAMIC_ENABLED)
+  /* Embedded keys + NVM static ID keys + VM dynamic keys */
+  CK_OBJECT_HANDLE searchHandles[KMS_INDEX_MAX_EMBEDDED_OBJECTS - KMS_INDEX_MIN_EMBEDDED_OBJECTS + 1 \
+                                 + KMS_INDEX_MAX_NVM_STATIC_OBJECTS - KMS_INDEX_MIN_NVM_STATIC_OBJECTS + 1 \
+                                 + KMS_INDEX_MAX_VM_DYNAMIC_OBJECTS - KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS + 1];
+#elif defined(KMS_NVM_ENABLED) && !defined(KMS_NVM_DYNAMIC_ENABLED) && !defined(KMS_VM_DYNAMIC_ENABLED)
   /* Embedded keys + NVM static ID keys */
   CK_OBJECT_HANDLE searchHandles[KMS_INDEX_MAX_EMBEDDED_OBJECTS - KMS_INDEX_MIN_EMBEDDED_OBJECTS + 1 \
                                  + KMS_INDEX_MAX_NVM_STATIC_OBJECTS - KMS_INDEX_MIN_NVM_STATIC_OBJECTS + 1];
-                                 /*!< Found object handles list  */
-#endif /* KMS_NVM_DYNAMIC_ENABLED */
-#else /* KMS_NVM_ENABLED */
+  /*!< Found object handles list  */
+#elif !defined(KMS_NVM_ENABLED) && !defined(KMS_NVM_DYNAMIC_ENABLED) && defined(KMS_VM_DYNAMIC_ENABLED)
+  /* Embedded keys + VM dynamic keys */
+  CK_OBJECT_HANDLE searchHandles[KMS_INDEX_MAX_EMBEDDED_OBJECTS - KMS_INDEX_MIN_EMBEDDED_OBJECTS + 1 \
+                                 + KMS_INDEX_MAX_VM_DYNAMIC_OBJECTS - KMS_INDEX_MIN_VM_DYNAMIC_OBJECTS + 1];
+  /*!< Found object handles list  */
+#elif !defined(KMS_NVM_ENABLED) && !defined(KMS_NVM_DYNAMIC_ENABLED)&& !defined(KMS_VM_DYNAMIC_ENABLED)
   /* Embedded keys only */
   CK_OBJECT_HANDLE searchHandles[KMS_INDEX_MAX_EMBEDDED_OBJECTS - KMS_INDEX_MIN_EMBEDDED_OBJECTS + 1];
-                                 /*!< Found object handles list  */
-#endif /* KMS_NVM_ENABLED */
+  /*!< Found object handles list  */
+#else /* KMS_NVM_ENABLED && KMS_NVM_DYNAMIC_ENABLED && KMS_VM_DYNAMIC_ENABLED */
+#error "Unsupported object search context structure"
+#endif /* KMS_NVM_ENABLED && KMS_NVM_DYNAMIC_ENABLED && KMS_VM_DYNAMIC_ENABLED */
   uint32_t searchIndex;          /*!< Index in found list for reading procedure */
 } kms_find_ctx_t;
 #endif /* KMS_SEARCH */
@@ -169,6 +180,7 @@ CK_RV  KMS_CreateObject(CK_SESSION_HANDLE hSession,
   *         CKR_SESSION_HANDLE_INVALID
   *         @ref KMS_Objects_SearchAttributes returned values
   *         @ref KMS_PlatfObjects_NvmRemoveObject returned values
+  *         @ref KMS_PlatfObjects_VmRemoveObject returned values
   */
 CK_RV  KMS_DestroyObject(CK_SESSION_HANDLE hSession,
                          CK_OBJECT_HANDLE hObject)
@@ -222,7 +234,11 @@ CK_RV  KMS_DestroyObject(CK_SESSION_HANDLE hSession,
     }
 
     /* Object is removable */
+#ifdef KMS_VM_DYNAMIC_ENABLED
+    e_ret_status = KMS_PlatfObjects_VmRemoveObject(hObject);
+#else /* KMS_VM_DYNAMIC_ENABLED */
     e_ret_status = KMS_PlatfObjects_NvmRemoveObject(hObject);
+#endif /* KMS_VM_DYNAMIC_ENABLED */
   }
   else
   {

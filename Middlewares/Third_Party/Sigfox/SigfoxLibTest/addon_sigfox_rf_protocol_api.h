@@ -14,7 +14,7 @@
     !!!!  DO NOT MODIFY THIS FILE !!!!
 
   ----------------------------------------------
- \endif
+ \endif
   ----------------------------------------------*/
 /*!
     \mainpage Sigfox RF and Protocol API documentation
@@ -132,6 +132,11 @@ typedef enum
     SFX_TEST_MODE_NVM                  = 13,  /*!< Execute the nvm test */
 }sfx_test_mode_t;
 
+
+/* Monarch test mode callback typedef */
+typedef void (*sfx_monarch_test_mode_callback_t) (void);
+
+
 /*!******************************************************************
  * \fn sfx_error_t ADDON_SIGFOX_RF_PROTOCOL_API_get_version ( sfx_u8 **version, sfx_u8 *size )
  * \brief This function allows to get the version of the Addon
@@ -231,7 +236,7 @@ sfx_error_t ADDON_SIGFOX_RF_PROTOCOL_API_test_mode(sfx_rc_enum_t rc_enum, sfx_te
 
 
 /*!******************************************************************
- * \fn sfx_error_t ADDON_SIGFOX_RF_PROTOCOL_API_monarch_test_mode(sfx_rc_enum_t rc_enum, sfx_test_mode_t test_mode, sfx_u8 rc_capabilities)
+ * \fn sfx_error_t ST_ADDON_SIGFOX_RF_PROTOCOL_API_monarch_test_mode(sfx_rc_enum_t rc_enum, sfx_test_mode_t test_mode, sfx_u8 rc_capabilities)
  * \brief This function executes the \htmlonly <font color=red> MONARCH  </font> \endhtmlonly test modes needed for the Sigfox RF and Protocol Tests.
  *
  *  ______________________________________________________________________________________________
@@ -284,7 +289,9 @@ sfx_error_t ADDON_SIGFOX_RF_PROTOCOL_API_test_mode(sfx_rc_enum_t rc_enum, sfx_te
  * \endverbatim
  *
  *******************************************************************/
-sfx_error_t ADDON_SIGFOX_RF_PROTOCOL_API_monarch_test_mode(sfx_rc_enum_t rc_enum, sfx_test_mode_t test_mode, sfx_u8 rc_capabilities);
+sfx_error_t ST_ADDON_SIGFOX_RF_PROTOCOL_API_monarch_test_mode(sfx_rc_enum_t rc_enum, sfx_test_mode_t test_mode, sfx_u8 rc_capabilities);
 
-
-
+/*******************************************************************/
+sfx_error_t ST_ADDON_SIGFOX_RF_PROTOCOL_API_monarch_test_mode_async(sfx_rc_enum_t rc_enum, sfx_test_mode_t test_mode, sfx_u8 rc_capabilities,
+																	sfx_monarch_test_mode_callback_t sfx_monarch_test_mode_wait_start_cb,
+																	sfx_monarch_test_mode_callback_t sfx_monarch_test_mode_wait_end_cb);

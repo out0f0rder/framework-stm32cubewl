@@ -64,7 +64,7 @@ extern "C" {
 /** @defgroup CA_Features_Config Supported Features
   * @{
   */
-  
+
 /**
   * @brief Define CA_FEAT_RNG to support RNG cryptographic algorithm
   */
@@ -73,7 +73,7 @@ extern "C" {
 /**
   * @}
   */
-  
+
 /**
   * @brief Define the below line to support AES cryptographic algorithm
   */
@@ -121,7 +121,7 @@ extern "C" {
 /**
   * @}
   */
-  
+
 /**
   * @brief Define CA_FEAT_ECC to support ECC cryptographic algorithm
   */
@@ -332,8 +332,9 @@ extern "C" {
   * @brief Use CA_ROUTE_AES_CFG_DEFAULT to choose default settings for the configured AES algorithm
   * @note  Default is: encryption & decryption using 128, 192 & 256 bits lengths keys enabled
   */
-#define CA_ROUTE_AES_CFG_DEFAULT  (CA_ROUTE_AES_CFG_ENCRYPT_ENABLE\
-                                   | CA_ROUTE_AES_CFG_DECRYPT_ENABLE | CA_ROUTE_AES_CFG_128BITS_ENABLE | CA_ROUTE_AES_CFG_192BITS_ENABLE | CA_ROUTE_AES_CFG_256BITS_ENABLE)
+#define CA_ROUTE_AES_CFG_DEFAULT  (CA_ROUTE_AES_CFG_ENCRYPT_ENABLE | CA_ROUTE_AES_CFG_DECRYPT_ENABLE\
+                                   | CA_ROUTE_AES_CFG_128BITS_ENABLE | CA_ROUTE_AES_CFG_192BITS_ENABLE\
+                                   | CA_ROUTE_AES_CFG_256BITS_ENABLE)
 #endif /* CA_ROUTE_AES_CFG_DEFAULT */
 
 /**
@@ -514,7 +515,7 @@ extern "C" {
   *          * @ref CA_ROUTE_ST      Use ST cryptographic library
   *          * @ref CA_ROUTE_MBED    Use MBED cryptographic library
   *          * @ref CA_ROUTE_HAL     Use HAL drivers
-  
+
   *        - The algorithm specific configuration (use a combination of the below elements)
   *          * @ref CA_ROUTE_ECC_CFG_VERIFY_ENABLE    Verification is enabled for this algorithm
   * @note  You can use @ref CA_ROUTE_DEFAULT to use default route
@@ -597,7 +598,7 @@ extern "C" {
   *          * @ref CA_ROUTE_ST      Use ST cryptographic library
   *          * @ref CA_ROUTE_MBED    Use MBED cryptographic library
   *          * @ref CA_ROUTE_HAL     Use HAL drivers
-  
+
   *        - The algorithm specific configuration (use a combination of the below elements)
   *          * @ref CA_ROUTE_RSA_CFG_SIGN_ENABLE      Signature is enabled for this algorithm
   *          * @ref CA_ROUTE_RSA_CFG_VERIFY_ENABLE    Verification is enabled for this algorithm

@@ -107,10 +107,10 @@ extern "C" {
 
 /**
   * @brief  Redirection of PKCS11 C_GetFunctionList to access KMS service through Secure engine
-  * @note   C_GetFunctionList obtains a pointer to the Cryptoki library’s list
+  * @note   C_GetFunctionList obtains a pointer to the Cryptoki library list
   *         of function pointers
   * @param  ppFunctionList points to a value which will receive a pointer to the
-  *         library’s CK_FUNCTION_LIST structure, which in turn contains function
+  *         library CK_FUNCTION_LIST structure, which in turn contains function
   *         pointers for all the Cryptoki API routines in the library
   * @retval CKR_ARGUMENTS_BAD
   * @retval CKR_FUNCTION_FAILED
@@ -168,7 +168,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_GetTokenInfo to access KMS service through Secure engine
   * @note   C_GetTokenInfo obtains information about a particular token in the system
-  * @param  slotID is the ID of the token’s slot
+  * @param  slotID is the ID of the token slot
   * @param  pInfo points to the location that receives the token information
   * @retval CKR_CRYPTOKI_NOT_INITIALIZED
   * @retval CKR_DEVICE_ERROR
@@ -192,7 +192,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_GetMechanismInfo to access KMS service through Secure engine
   * @note   C_GetMechanismInfo obtains information about a particular mechanism possibly supported by a token
-  * @param  slotID is the ID of the token’s slot
+  * @param  slotID is the ID of the token slot
   * @param  type is the type of mechanism
   * @param  pInfo points to the location that receives the mechanism information
   * @retval CKR_CRYPTOKI_NOT_INITIALIZED
@@ -219,7 +219,7 @@ extern "C" {
   * @brief  Redirection of PKCS11 C_OpenSession to access KMS service through Secure engine
   * @note   C_OpenSession opens a session between an application and a token in
   *         a particular slot
-  * @param  slotID is the slot’s ID
+  * @param  slotID is the slot ID
   * @param  flags indicates the type of session
   * @param  pApplication is an application-defined pointer to be passed to the
   *         notification callback
@@ -251,7 +251,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_CloseSession to access KMS service through Secure engine
   * @note   C_CloseSession closes a session between an application and a token
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @retval CKR_CRYPTOKI_NOT_INITIALIZED
   * @retval CKR_DEVICE_ERROR
   * @retval CKR_DEVICE_MEMORY
@@ -272,10 +272,10 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_CreateObject to access KMS service through Secure engine
   * @note   C_CreateObject creates a new object
-  * @param  hSession is the session’s handle
-  * @param  pTemplate points to the object’s template
+  * @param  hSession is the session handle
+  * @param  pTemplate points to the object template
   * @param  ulCount is the number of attributes in the template
-  * @param  phObject points to the location that receives the new object’s handle
+  * @param  phObject points to the location that receives the new object handle
   * @retval CKR_ARGUMENTS_BAD
   * @retval CKR_ATTRIBUTE_READ_ONLY
   * @retval CKR_ATTRIBUTE_TYPE_INVALID
@@ -308,8 +308,8 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_DestroyObject to access KMS service through Secure engine
   * @note   C_DestroyObject destroys an object
-  * @param  hSession is the session’s handle
-  * @param  hObject is the object’s handle
+  * @param  hSession is the session handle
+  * @param  hObject is the object handle
   * @retval CKR_ACTION_PROHIBITED
   * @retval CKR_CRYPTOKI_NOT_INITIALIZED
   * @retval CKR_DEVICE_ERROR
@@ -335,8 +335,8 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_GetAttributeValue to access KMS service through Secure engine
   * @note   C_GetAttributeValue obtains the value of one or more attributes of an object
-  * @param  hSession is the session’s handle
-  * @param  hObject is the object’s handle
+  * @param  hSession is the session handle
+  * @param  hObject is the object handle
   * @param  pTemplate points to a template that specifies which attribute values
   *         are to be obtained, and receives the attribute values
   * @param  ulCount is the number of attributes in the template
@@ -365,8 +365,8 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_SetAttributeValue to access KMS service through Secure engine
   * @note   C_SetAttributeValue modifies the value of one or more attributes of an object
-  * @param  hSession is the session’s handle
-  * @param  hObject is the object’s handle
+  * @param  hSession is the session handle
+  * @param  hObject is the object handle
   * @param  pTemplate points to a template that specifies which attribute values
   *         are to be modified and their new values
   * @param  ulCount is the number of attributes in the template
@@ -401,7 +401,7 @@ extern "C" {
   * @brief  Redirection of PKCS11 C_FindObjectsInit to access KMS service through Secure engine
   * @note   C_FindObjectsInit initializes a search for token and session objects
   *         that match a template
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pTemplate points to a search template that specifies the attribute
   *         values to match
   * @param  ulCount is the number of attributes in the search template
@@ -431,7 +431,7 @@ extern "C" {
   * @brief  Redirection of PKCS11 C_FindObjects to access KMS service through Secure engine
   * @note   C_FindObjects continues a search for token and session objects that
   *         match a template, obtaining additional object handles
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  phObject points to the location that receives the list (array) of
   *         additional object handles
   * @param  ulMaxObjectCount is the maximum number of object handles to be returned
@@ -459,7 +459,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_FindObjectsFinal to access KMS service through Secure engine
   * @note   C_FindObjectsFinal terminates a search for token and session objects
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @retval CKR_CRYPTOKI_NOT_INITIALIZED
   * @retval CKR_DEVICE_ERROR
   * @retval CKR_DEVICE_MEMORY
@@ -481,7 +481,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_EncryptInit to access KMS service through Secure engine
   * @note   C_EncryptInit initializes an encryption operation
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pMechanism points to the encryption mechanism
   * @param  hKey is the handle of the encryption key
   * @retval CKR_CRYPTOKI_NOT_INITIALIZED
@@ -514,7 +514,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_Encrypt to access KMS service through Secure engine
   * @note   C_Encrypt encrypts single-part data
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pData points to the data
   * @param  ulDataLen is the length in bytes of the data
   * @param  pEncryptedData points to the location that receives the encrypted data
@@ -547,7 +547,7 @@ extern "C" {
   * @brief  Redirection of PKCS11 C_EncryptUpdate to access KMS service through Secure engine
   * @note   C_EncryptUpdate continues a multiple-part encryption operation,
   *         processing another data part
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pPart points to the data part
   * @param  ulPartLen is the length of the data part
   * @param  pEncryptedPart points to the location that receives the encrypted data part
@@ -578,7 +578,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_EncryptFinal to access KMS service through Secure engine
   * @note   C_EncryptFinal finishes a multiple-part encryption operation
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pLastEncryptedPart points to the location that receives the last
   *         encrypted data part, if any
   * @param  pulLastEncryptedPartLen points to the
@@ -608,7 +608,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_DecryptInit to access KMS service through Secure engine
   * @note   C_DecryptInit initializes a decryption operation
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pMechanism points to the decryption mechanism
   * @param  hKey is the handle of the decryption key
   * @retval CKR_ARGUMENTS_BAD
@@ -642,7 +642,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_Decrypt to access KMS service through Secure engine
   * @note   C_Decrypt decrypts encrypted data in a single part
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pEncryptedData points to the encrypted data
   * @param  ulEncryptedDataLen is the length of the encrypted data
   * @param  pData points to the location that receives the recovered data
@@ -675,7 +675,7 @@ extern "C" {
   * @brief  Redirection of PKCS11 C_DecryptUpdate to access KMS service through Secure engine
   * @note   C_DecryptUpdate continues a multiple-part decryption operation,
   *         processing another encrypted data part
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pEncryptedPart points to the encrypted data part
   * @param  ulEncryptedPartLen is the length of the encrypted data part
   * @param  pPart points to the location that receives the recovered data part
@@ -707,7 +707,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_DecryptFinal to access KMS service through Secure engine
   * @note   C_DecryptFinal finishes a multiple-part decryption operation
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pLastPart points to the location that receives the last recovered
   *         data part, if any
   * @param  pulLastPartLen points to the location that holds the length of the
@@ -739,7 +739,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_DigestInit to access KMS service through Secure engine
   * @note   C_DigestInit initializes a message-digesting operation
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pMechanism points to the digesting mechanism
   * @retval CKR_ARGUMENTS_BAD
   * @retval CKR_CRYPTOKI_NOT_INITIALIZED
@@ -768,7 +768,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_Digest to access KMS service through Secure engine
   * @note   C_Digest digests data in a single part
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pData points to the data
   * @param  ulDataLen is the length of the data
   * @param  pDigest points to the location that receives the message digest
@@ -798,7 +798,7 @@ extern "C" {
   * @brief  Redirection of PKCS11 C_DigestUpdate to access KMS service through Secure engine
   * @note   C_DigestUpdate continues a multiple-part message-digesting operation,
   *         processing another data part
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pPart points to the data part
   * @param  ulPartLen is the length of the data part
   * @retval CKR_ARGUMENTS_BAD
@@ -825,7 +825,7 @@ extern "C" {
   * @brief  Redirection of PKCS11 C_DigestFinal to access KMS service through Secure engine
   * @note   C_DigestFinal finishes a multiple-part message-digesting operation,
   *         returning the message digest
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pDigest points to the location that receives the message digest
   * @param  pulDigestLen points to the location that holds the length of the message digest
   * @retval CKR_ARGUMENTS_BAD
@@ -853,7 +853,7 @@ extern "C" {
   * @brief  Redirection of PKCS11 C_SignInit to access KMS service through Secure engine
   * @note   C_SignInit initializes a signature operation, where the signature is
   *         an appendix to the data
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pMechanism points to the signature mechanism
   * @param  hKey is the handle of the signature key
   * @retval CKR_ARGUMENTS_BAD
@@ -887,7 +887,7 @@ extern "C" {
   * @brief  Redirection of PKCS11 C_Sign to access KMS service through Secure engine
   * @note   C_Sign signs data in a single part, where the signature is an appendix
   *         to the data
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pData points to the data
   * @param  ulDataLen is the length of the data
   * @param  pSignature points to the location that receives the signature
@@ -921,7 +921,7 @@ extern "C" {
   * @brief  Redirection of PKCS11 C_VerifyInit to access KMS service through Secure engine
   * @note   C_VerifyInit initializes a verification operation, where the signature
   *         is an appendix to the data
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pMechanism points to the structure that specifies the verification mechanism
   * @param  hKey is the handle of the verification key
   * @retval CKR_ARGUMENTS_BAD
@@ -956,7 +956,7 @@ extern "C" {
   * @brief  Redirection of PKCS11 C_Verify to access KMS service through Secure engine
   * @note   C_Verify verifies a signature in a single-part operation, where the
   *         signature is an appendix to the data
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pData points to the data
   * @param  ulDataLen is the length of the data
   * @param  pSignature points to the signature
@@ -988,7 +988,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_DeriveKey to access KMS service through Secure engine
   * @note   C_DeriveKey derives a key from a base key, creating a new key object
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pMechanism points to a structure that specifies the key derivation mechanism
   * @param  hBaseKey is the handle of the base key
   * @param  pTemplate points to the template
@@ -1034,7 +1034,7 @@ extern "C" {
 /**
   * @brief  Redirection of PKCS11 C_GenerateKeyPair to access KMS service through Secure engine
   * @note   C_GenerateKeyPair generates a public/private key pair, creating new key objects
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pMechanism points to the key generation mechanism
   * @param  pPublicKeyTemplate points to the template for the public key
   * @param  ulPublicKeyAttributeCount is the number of attributes in the public-key template
@@ -1082,7 +1082,7 @@ SE_KMS_GenerateKeyPair( hSession, pMechanism, pPublicKeyTemplate, \
 /**
   * @brief  Redirection of PKCS11 C_GenerateRandom to access KMS service through Secure engine
   * @note   C_GenerateRandom generates random or pseudo-random data
-  * @param  hSession is the session’s handle
+  * @param  hSession is the session handle
   * @param  pRandomData points to the location that receives the random data
   * @param  ulRandomLen is the length in bytes of the random or pseudo-random data
   *         to be generated

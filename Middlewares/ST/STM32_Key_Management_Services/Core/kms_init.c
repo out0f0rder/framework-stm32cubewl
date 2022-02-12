@@ -26,7 +26,8 @@
 #include "kms_init.h"               /* KMS session services */
 
 #include "kms_enc_dec.h"            /* KMS encryption & decryption services */
-#include "kms_nvm_storage.h"        /* KMS storage services */
+#include "kms_nvm_storage.h"        /* KMS NVM storage services */
+#include "kms_vm_storage.h"         /* KMS VM storage services */
 #include "kms_platf_objects.h"      /* KMS platform objects services */
 #include "kms_low_level.h"          /* CRC configuration for Init */
 #include "CryptoApi/ca.h"           /* Crypto API services */
@@ -110,7 +111,7 @@ CK_RV  KMS_Initialize(CK_VOID_PTR pInitArgs)
          (ptr->LockMutex == NULL) && (ptr->UnlockMutex == NULL))
        )
     {
-      /* = the application won’t be accessing the Cryptoki library from multiple threads simultaneously */
+      /* = the application will not be accessing the Cryptoki library from multiple threads simultaneously */
       /* => Supported case */
     }
     else

@@ -30,6 +30,9 @@
 #include <stdlib.h>
 
 /* Private defines -----------------------------------------------------------*/
+#define PKA_ECDSA_VERIF_OUT_SIGNATURE_R ((0x055CUL - PKA_RAM_OFFSET)>>2)   /*!< Output result */
+#define IMAGE_VALID   (uint8_t)(0x55)
+#define IMAGE_INVALID (uint8_t)(0x82)
 
 /* Private typedef -----------------------------------------------------------*/
 
@@ -564,6 +567,10 @@ int32_t CA_ECDSAverify(const uint8_t      *P_pDigest,
   uint8_t wrap_Y[384] = {0};
   uint8_t wrap_absA[384] = {0};
   uint8_t wrap_sign;
+  __IO uint8_t sign_check_status = 0x00U;
+  uint32_t i;
+  uint32_t j;
+  uint8_t *p_sign_PKA;
 
   (void)P_digestSize;
   (void)P_pMemBuf;
@@ -640,7 +647,26 @@ int32_t CA_ECDSAverify(const uint8_t      *P_pDigest,
       /* Check the signature */
       if (HAL_PKA_ECDSAVerif_IsValidSignature(&P_pVerifyCtx->pmEC->hpka) == 1UL)
       {
-        ecdsa_ret_status = CA_SIGNATURE_VALID;
+        /* Double check ECDSA signature to avoid basic HW attack */
+        p_sign_PKA = (uint8_t *) & (P_pVerifyCtx->pmEC->hpka).Instance->RAM[PKA_ECDSA_VERIF_OUT_SIGNATURE_R];
+
+        /* Signature comparison LSB vs MSB */
+        j = PkaVerify.primeOrderSize - 1U;
+        for (i = 0U; i < PkaVerify.primeOrderSize; i++)
+        {
+          sign_check_status |= wrap_R[i] ^ IMAGE_VALID ^ p_sign_PKA[j];
+          j--;
+        }
+
+        /* Loop fully executed ==> no basic HW attack */
+        if ((sign_check_status == IMAGE_VALID) && (i == PkaVerify.primeOrderSize))
+        {
+          ecdsa_ret_status = CA_SIGNATURE_VALID;
+        }
+        else
+        {
+          ecdsa_ret_status = CA_SIGNATURE_INVALID;
+        }
       }
     }
     else
