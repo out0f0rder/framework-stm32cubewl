@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -147,7 +146,11 @@ CK_RV          KMS_DeriveKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
 {
 #ifdef KMS_DERIVE_KEY
   CK_RV e_ret_status;
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+  kms_obj_keyhead_t *pkms_object = NULL;
+#else /* KMS_ENCRYPT_DECRYPT_BLOB */
   kms_obj_keyhead_t *pkms_object;
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
   kms_attr_t *P_pKeyAttribute = NULL;
 
   if (!KMS_IS_INITIALIZED())
@@ -361,7 +364,7 @@ CK_RV          KMS_DeriveKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
         break;
       }
 
-      /* Prepare the memory buffer strucure */
+      /* Prepare the memory buffer structure */
       mb_st.pmBuf = p_ctx->tmpbuffer;
       mb_st.mUsed = 0;
       mb_st.mSize = (int16_t)sizeof(p_ctx->tmpbuffer);
@@ -473,6 +476,13 @@ CK_RV          KMS_DeriveKey(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMecha
       e_ret_status = CKR_MECHANISM_INVALID;
       break;
   }
+
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+  if (pkms_object!= NULL_PTR)
+  {
+    KMS_Objects_ReleasePointer(hBaseKey, pkms_object);
+  }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 
   return e_ret_status;
 #else /* KMS_DERIVE_KEY */
@@ -591,7 +601,7 @@ CK_RV KMS_GenerateKeyPair(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanis
         return CKR_DEVICE_MEMORY;
       }
 
-      /* Prepare the memory buffer strucure */
+      /* Prepare the memory buffer structure */
       mb_st.pmBuf = p_ctx->tmpbuffer;
       mb_st.mUsed = 0;
       mb_st.mSize = (int16_t)sizeof(p_ctx->tmpbuffer);
@@ -722,4 +732,3 @@ CK_RV KMS_GenerateKeyPair(CK_SESSION_HANDLE hSession, CK_MECHANISM_PTR pMechanis
   */
 
 #endif /* KMS_ENABLED */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

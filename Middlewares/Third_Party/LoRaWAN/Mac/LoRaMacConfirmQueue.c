@@ -28,15 +28,9 @@
  *
  * \author    Daniel Jaeckle ( STACKFORCE )
  */
-#include <stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
-
-#include "timer.h"
 #include "utilities.h"
-#include "LoRaMac.h"
 #include "LoRaMacConfirmQueue.h"
-
+#include "LoRaMacVersion.h"
 
 /*
  * LoRaMac Confirm Queue Context NVM structure
@@ -183,7 +177,11 @@ bool LoRaMacConfirmQueueAdd( MlmeConfirmQueue_t* mlmeConfirm )
     ConfirmQueueCtx.BufferEnd->Request = mlmeConfirm->Request;
     ConfirmQueueCtx.BufferEnd->Status = mlmeConfirm->Status;
     ConfirmQueueCtx.BufferEnd->RestrictCommonReadyToHandle = mlmeConfirm->RestrictCommonReadyToHandle;
+#if (defined( LORAMAC_VERSION ) && ( LORAMAC_VERSION == 0x01000300 ))
     ConfirmQueueCtx.BufferEnd->ReadyToHandle = false;
+#elif (defined( LORAMAC_VERSION ) && (( LORAMAC_VERSION == 0x01000400 ) || ( LORAMAC_VERSION == 0x01010100 )))
+    ConfirmQueueCtx.BufferEnd->ReadyToHandle = mlmeConfirm->ReadyToHandle;
+#endif /* LORAMAC_VERSION */
     // Increase counter
     ConfirmQueueCtx.Nvm.MlmeConfirmQueueCnt++;
     // Update end pointer
@@ -293,6 +291,8 @@ void LoRaMacConfirmQueueHandleCb( MlmeConfirm_t* mlmeConfirm )
     uint8_t nbElements = ConfirmQueueCtx.Nvm.MlmeConfirmQueueCnt;
     bool readyToHandle = false;
     MlmeConfirmQueue_t mlmeConfirmToStore;
+
+    memset1( ( uint8_t* ) &mlmeConfirmToStore, 0, sizeof( MlmeConfirmQueue_t ) );
 
     for( uint8_t i = 0; i < nbElements; i++ )
     {

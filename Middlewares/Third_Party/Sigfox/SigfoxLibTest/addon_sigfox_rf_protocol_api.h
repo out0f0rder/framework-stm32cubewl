@@ -119,7 +119,7 @@ typedef enum
     SFX_TEST_MODE_TX_BPSK              = 0,    /*!< Only BPSK with Synchro Bit + Synchro frame + PN sequence : no hopping centered on the TX_frequency */
     SFX_TEST_MODE_TX_PROTOCOL          = 1,    /*!< with full protocol with AES key defined at SIGFOX_API_open call: send all SIGFOX protocol frames available with hopping     */
     SFX_TEST_MODE_RX_PROTOCOL          = 2,    /*!< with full protocol with AES key defined at SIGFOX_API_open call: send SIGFOX protocol frames w/ initiate_downlink_flag     = SFX_TRUE */
-    SFX_TEST_MODE_RX_GFSK              = 3,    /*!< with known pattern with SB + SF + Pattern on RX_Frequency defined at SIGFOX_API_open function : od internaly compare re    ceived frame <=> known pattern and call sfx_test_report() */
+    SFX_TEST_MODE_RX_GFSK              = 3,    /*!< with known pattern with SB + SF + Pattern on RX_Frequency defined at SIGFOX_API_open function : od internally compare received frame <=> known pattern and call sfx_test_report() */
     SFX_TEST_MODE_RX_SENSI             = 4,    /*!< Do uplink +  downlink frame with AES key defined at SIGFOX_API_open call but specific shorter timings */
     SFX_TEST_MODE_TX_SYNTH             = 5,    /*!< Do 9 uplink frames to measure frequency synthesis step */
     SFX_TEST_MODE_TX_FREQ_DISTRIBUTION = 6,    /*!< Call all Sigfox frames of all types and size on all the Sigfox Band  */
@@ -186,7 +186,7 @@ sfx_error_t ADDON_SIGFOX_RF_PROTOCOL_API_get_version(sfx_u8** version, sfx_u8* s
  *  ______________________________________________________________________________________________
  *
  *  - <B>If test_mode = SFX_TEST_MODE_RX_SENSI (TEST_MODE 4).</B><BR>
- *  This test is specific to SIGFOX's test equipments & softwares.<BR>
+ *  This test is specific to SIGFOX's test equipment & software.<BR>
  *  It is mandatory to measure the real sensitivity of device.<BR>
  *  This test execute a kind of "ping-pong" loop that starts with a frame sent by the device
  *  and then a response sent by the equipment ( downlink frame ) that has to be received by the device.
@@ -202,7 +202,7 @@ sfx_error_t ADDON_SIGFOX_RF_PROTOCOL_API_get_version(sfx_u8** version, sfx_u8* s
  *  - <B>If test_mode = SFX_TEST_MODE_TX_FREQ_DISTRIBUTION (TEST_MODE 6).</B><BR>
  *  This test consists in calling SIGFOX_API_send_xxx functions to test the
  *  complete protocol in Uplink only, w/ Uplink Data = 0x40 to 0x4B<BR>.
- *  There are several occurences of the loop to ensure the full Sigfox band is covered
+ *  There are several occurrences of the loop to ensure the full Sigfox band is covered
  *  ______________________________________________________________________________________________
  *
  *  - <B>If test_mode = SFX_TEST_MODE_TX_BIT (TEST_MODE 11).</B><BR>
@@ -255,7 +255,7 @@ sfx_error_t ADDON_SIGFOX_RF_PROTOCOL_API_test_mode(sfx_rc_enum_t rc_enum, sfx_te
  *
  *  - <B> \htmlonly <font color=red>MONARCH FEATURE ONLY </font> \endhtmlonly
  *  If test_mode = SFX_TEST_MODE_RX_MONARCH_BEACON (TEST_MODE 9).</B><BR>
- *  This test is specific to SIGFOX's test equipments & softwares.<BR>
+ *  This test is specific to SIGFOX's test equipment & software.<BR>
  *  This test execute a kind of "ping-pong" loop that starts with a frame sent by the device
  *  to the equipment. At the reception of the frame, the equipment sends the beacon that
  *  will be received by the device. The addon computes the RC found counters which are
@@ -265,7 +265,7 @@ sfx_error_t ADDON_SIGFOX_RF_PROTOCOL_API_test_mode(sfx_rc_enum_t rc_enum, sfx_te
  *
  *  - <B> \htmlonly <font color=red>MONARCH FEATURE ONLY </font> \endhtmlonly
  *  If test_mode = SFX_TEST_MODE_RX_MONARCH_SENSI (TEST_MODE 10).</B><BR>
- *  This test is specific to SIGFOX's test equipments & softwares.<BR>
+ *  This test is specific to SIGFOX's test equipment & software.<BR>
  *  This test execute a kind of "ping-pong" loop that starts with a frame sent by the device
  *  to the equipment. At the reception of the frame, the equipment sends the beacon that
  *  will be received by the device. The addon computes the RC found counters which are

@@ -182,7 +182,7 @@ sfx_u8 MONARCH_API_configure_search_pattern(sfx_monarch_pattern_search_t list_fr
  * \brief This function stops the scan
  *
  * \retval SFX_ERR_NONE:                              No error
- * \retval MONARCH_ERR_API_STOP_SEARCH_PATTERN:       Stop seach pattern error
+ * \retval MONARCH_ERR_API_STOP_SEARCH_PATTERN:       Stop search pattern error
  *******************************************************************/
 sfx_u8 MONARCH_API_stop_search_pattern(void);
 

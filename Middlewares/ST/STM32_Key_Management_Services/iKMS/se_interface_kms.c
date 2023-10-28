@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -1860,6 +1859,105 @@ __root CK_RV SE_KMS_LockServices(CK_ULONG_PTR pServices, CK_ULONG ulCount)
 }
 
 /**
+  * @brief  This function is called to call KMS service that will increment the specified secure counter
+  * @param  hSession session handle
+  * @param  hObject object handle
+  * @param  pCounterValue pointer to the location that receives the updated counter value (NULL if not used)
+  * @retval CKR_OK
+  *         CKR_ATTRIBUTE_TYPE_INVALID
+  *         CKR_ATTRIBUTE_VALUE_INVALID
+  *         CKR_CRYPTOKI_NOT_INITIALIZED
+  *         CKR_SESSION_HANDLE_INVALID
+  *         CKR_FUNCTION_FAILED
+  *         CKR_FUNCTION_NOT_SUPPORTED
+  *         CKR_GENERAL_ERROR
+  *         CKR_OBJECT_HANDLE_INVALID
+  *         CKR_DEVICE_MEMORY
+  */
+__root CK_RV SE_KMS_CounterIncrement(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
+                                     CK_ULONG_PTR pCounterValue)
+{
+  CK_RV ck_rv_ret_status = CKR_GENERAL_ERROR;
+  uint32_t primask_bit; /*!< interruption mask saved when disabling ITs then restore when re-enabling ITs */
+
+#if defined(SFU_ISOLATE_SE_WITH_MPU)
+  if (SE_IsUnprivileged() != 0)
+  {
+    SE_ErrorStatus e_ret_status;
+    uint32_t params[SE_MAX_ARGS_NUMBER] = {(uint32_t)hSession, (uint32_t)hObject,
+                                           (uint32_t)pCounterValue};
+    SE_SysCall(&e_ret_status, (SE_FunctionIDTypeDef)(SE_MW_ADDON_KMS_MSB | KMS_COUNTER_INCREMENT_FCT_ID),
+               (SE_StatusTypeDef *)(uint32_t)&ck_rv_ret_status, &params);
+  }
+  else
+#endif /* SFU_ISOLATE_SE_WITH_MPU */
+  {
+    /* Set the CallGate function pointer */
+    SET_CALLGATE();
+
+    SE_EnterSecureMode(&primask_bit);
+
+    /* Secure Engine Call */
+    (*SE_CallGatePtr)((SE_FunctionIDTypeDef)(SE_MW_ADDON_KMS_MSB | KMS_COUNTER_INCREMENT_FCT_ID),
+                      (SE_StatusTypeDef *)(uint32_t)&ck_rv_ret_status, primask_bit,
+                      hSession, hObject, pCounterValue);
+
+    SE_ExitSecureMode(primask_bit);
+  }
+
+  return ck_rv_ret_status;
+}
+
+/**
+  * @brief  This function is called to call KMS service that will get the value of the specified secure counter
+  * @param  hSession session handle
+  * @param  hObject object handle
+  * @param  pCounterValue pointer to the location that receives the current counter value
+  * @retval CKR_OK
+  *         CKR_ARGUMENTS_BAD
+  *         CKR_ATTRIBUTE_TYPE_INVALID
+  *         CKR_CRYPTOKI_NOT_INITIALIZED
+  *         CKR_SESSION_HANDLE_INVALID
+  *         CKR_FUNCTION_FAILED
+  *         CKR_FUNCTION_NOT_SUPPORTED
+  *         CKR_OBJECT_HANDLE_INVALID
+  */
+__root CK_RV SE_KMS_CounterGetValue(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE hObject,
+                             CK_ULONG_PTR pCounterValue)
+{
+  CK_RV ck_rv_ret_status = CKR_GENERAL_ERROR;
+  uint32_t primask_bit; /*!< interruption mask saved when disabling ITs then restore when re-enabling ITs */
+
+#if defined(SFU_ISOLATE_SE_WITH_MPU)
+  if (SE_IsUnprivileged() != 0)
+  {
+    SE_ErrorStatus e_ret_status;
+    uint32_t params[SE_MAX_ARGS_NUMBER] = {(uint32_t)hSession, (uint32_t)hObject,
+                                           (uint32_t) pCounterValue};
+    SE_SysCall(&e_ret_status, (SE_FunctionIDTypeDef)(SE_MW_ADDON_KMS_MSB | KMS_COUNTER_GET_VALUE_FCT_ID),
+               (SE_StatusTypeDef *)(uint32_t)&ck_rv_ret_status, &params);
+  }
+  else
+#endif /* SFU_ISOLATE_SE_WITH_MPU */
+  {
+    /* Set the CallGate function pointer */
+    SET_CALLGATE();
+
+    SE_EnterSecureMode(&primask_bit);
+
+    /* Secure Engine Call */
+    (*SE_CallGatePtr)((SE_FunctionIDTypeDef)(SE_MW_ADDON_KMS_MSB | KMS_COUNTER_GET_VALUE_FCT_ID),
+                      (SE_StatusTypeDef *)(uint32_t)&ck_rv_ret_status, primask_bit,
+                      hSession, hObject, pCounterValue);
+
+    SE_ExitSecureMode(primask_bit);
+  }
+
+  return ck_rv_ret_status;
+}
+
+
+/**
   * @}
   */
 
@@ -1880,4 +1978,3 @@ __root CK_RV SE_KMS_LockServices(CK_ULONG_PTR pServices, CK_ULONG ulCount)
 
 
 #endif /* KMS_ENABLED */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

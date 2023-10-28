@@ -101,7 +101,7 @@
 #define SFX_ERR_API_OPEN_RC_PTR                                  (sfx_u8)(0x13) /*!< RC pointer is NULL */
 #define SFX_ERR_API_OPEN_MACRO_CHANNEL_WIDTH                     (sfx_u8)(0x14) /*!< This macro channel width is not authorized by Sigfox Lib, check your RC configuration */
 #define SFX_ERR_API_MSG_COUNTER_ROLLOVER_NOT_SUPPORTED           (sfx_u8)(0x16) /*!< Message counter rollover retrieved not supported */
-#define SFX_ERR_API_MSG_COUNTER_ROLLOVER_NOT_ALLOWED_IN_PAYLOAD_ENC (sfx_u8)(0x17) /*!< Message counter rollover retrieved not supported in payload crypted case */
+#define SFX_ERR_API_MSG_COUNTER_ROLLOVER_NOT_ALLOWED_IN_PAYLOAD_ENC (sfx_u8)(0x17) /*!< Message counter rollover retrieved not supported in payload encrypted case */
 
 #define SFX_ERR_API_CLOSE_FREE                                   (sfx_u8)(0x20) /*!< Error occurs during the closing of the Sigfox Library : error on MCU_API_free */
 #define SFX_ERR_API_CLOSE_STATE                                  (sfx_u8)(0x21) /*!< Error occurs during the closing of the Sigfox Library : error on library state */
@@ -146,7 +146,7 @@
 #define SFX_ERR_INT_PROCESS_UPLINK_START_TIMER_FH_IN_DL          (sfx_u8)(0x70) /*!< Error when calling MCU_API_timer_start for FH : check the manuf error code */
 #define SFX_ERR_INT_PROCESS_UPLINK_WAIT_FOR_END_TIMER_FH_IN_DL   (sfx_u8)(0x71) /*!< Error when calling MCU_API_timer_stop for FH  : check the manuf error code */
 #define SFX_ERR_INT_PROCESS_UPLINK_TIMER_FH                      (sfx_u8)(0x72) /*!< Error when starting the timer after the first frame to respect the FCC regulation - timer_enable config set to 1 */
-#define SFX_ERR_INT_PROCESS_UPLINK_WAIT_FOR_END_TIMER_FH         (sfx_u8)(0x73) /*!< Error when stoping the timer after the first frame */
+#define SFX_ERR_INT_PROCESS_UPLINK_WAIT_FOR_END_TIMER_FH         (sfx_u8)(0x73) /*!< Error when stopping the timer after the first frame */
 #define SFX_ERR_INT_PROCESS_UPLINK_DELAY_INTERFRAME              (sfx_u8)(0x74) /*!< Error when executing the interframe delay : check the manuf error code */
 #define SFX_ERR_INT_PROCESS_UPLINK_TIMER_DOWNLINK                (sfx_u8)(0x75) /*!< Error when starting the timer after the first frame to prepare the downlink */
 #define SFX_ERR_INT_PROCESS_UPLINK_CS_RETRY                      (sfx_u8)(0x76) /*!< Error when executing the Carrier Sense for the first frame : check the manuf error code to get the error */
@@ -155,8 +155,8 @@
 #define SFX_ERR_INT_PROCESS_UPLINK_CS_RETRY_DELAY_ATTEMPT        (sfx_u8)(0x79) /*!< Error on executing the delay between several attempts of the first frame : check the manuf error code */
 #define SFX_ERR_INT_PROCESS_UPLINK_CS_REPETITION                 (sfx_u8)(0x7A) /*!< Error Carrier Sense for frame 2 and 3: check the manuf error code */
 #define SFX_ERR_INT_PROCESS_UPLINK_CS_REPETITION_START_TIMER     (sfx_u8)(0x7B) /*!< Error Carrier Sense for starting the timer for CS on frame 2 and 3: check the manuf error code */
-#define SFX_ERR_INT_PROCESS_UPLINK_CS_REPETITION_STOP_TIMER      (sfx_u8)(0x7C) /*!< Error Carrier Sense for stoping the timer for CS on frame 2 and 3: check the manuf error code */
-#define SFX_ERR_INT_PROCESS_UPLINK_CS_REPETITION_STOP_TIMER_2    (sfx_u8)(0x7D) /*!< Error Carrier Sense for stoping the timer for CS on frame 2 and 3: check the manuf error code */
+#define SFX_ERR_INT_PROCESS_UPLINK_CS_REPETITION_STOP_TIMER      (sfx_u8)(0x7C) /*!< Error Carrier Sense for stopping the timer for CS on frame 2 and 3: check the manuf error code */
+#define SFX_ERR_INT_PROCESS_UPLINK_CS_REPETITION_STOP_TIMER_2    (sfx_u8)(0x7D) /*!< Error Carrier Sense for stopping the timer for CS on frame 2 and 3: check the manuf error code */
 #define SFX_ERR_INT_PROCESS_UPLINK_CS_TIMEOUT                    (sfx_u8)(0x7E) /*!< Error Carrier Sense unsuccessful */
 
 #define SFX_ERR_INT_BUILD_FRAME_SE                               (sfx_u8)(0x90) /*!< Error occurs when building the frame with a SE : check the manuf error code */
@@ -176,8 +176,8 @@
 #define SFX_ERR_INT_GET_RECEIVED_FRAMES_WAIT_NOT_EXECUTED        (sfx_u8)(0x9C) /*!< State return by the RF_API_wait_frame is downlink reception not executed */
 
 #define SFX_ERR_INT_GET_DEVICE_INFO                              (sfx_u8)(0x9D) /*!< Error when retrieving the device info : check the manuf error code */
-#define SFX_ERR_INT_GET_DEVICE_INFO_CRC                          (sfx_u8)(0x9E) /*!< Error when checking the validty of the device info - CRC is bad */
-#define SFX_ERR_INT_GET_DEVICE_INFO_CERTIFICATE                  (sfx_u8)(0x9F) /*!< Error when checking the validty of the device info - Certificate is not the appropriate one */
+#define SFX_ERR_INT_GET_DEVICE_INFO_CRC                          (sfx_u8)(0x9E) /*!< Error when checking the validity of the device info - CRC is bad */
+#define SFX_ERR_INT_GET_DEVICE_INFO_CERTIFICATE                  (sfx_u8)(0x9F) /*!< Error when checking the validity of the device info - Certificate is not the appropriate one */
 
 
 #define SFX_ERR_API_SET_RC_SYNC_PERIOD                                     (sfx_u8)(0xB0) /*!< Set RC Sync frame transmission period failed */
@@ -414,7 +414,7 @@ typedef enum
  * \brief State Machine constants
  * The state machine will never
  * returns automatically to SFX_STATE_READY
- * if an error has occured during
+ * if an error has occurred during
  * frame transmissions
  *******************************/
 typedef enum
@@ -455,7 +455,7 @@ typedef enum
 
 /********************************
  * \enum sfx_rf_mode_t
- * \brief Functionnal mode for RF chip
+ * \brief Functional mode for RF chip
  *******************************/
 typedef enum
 {
@@ -735,7 +735,7 @@ sfx_error_t SIGFOX_API_send_outofband(sfx_oob_enum_t oob_type);
  *           - config_word[0] : number of attempts to send the first frame [ has to be greater or equal to 1, maximum value  = 0xFFFF ]
  *           - config_word[1] : maximum carrier sense sliding window (in ms) [ has to be greater than 6 ms ( CS_MIN_DURATION_IN_MS + 1 ), maximum value  = 0xFFFF ]
  *           - config_word[2] :
- *                  . bit 8   : set the value to 1 to indicate that the device will use the full operationnal radio band.( 192kHz )
+ *                  . bit 8   : set the value to 1 to indicate that the device will use the full operational radio band.( 192kHz )
  *                  . bit 7-3 : number of Carrier Sense attempts.
  *                  . bit 2-0 : number of frames sent.
  *           - timer_enable : unused
@@ -867,7 +867,7 @@ sfx_error_t SIGFOX_API_get_version(sfx_u8** version, sfx_u8* size, sfx_version_t
 /*!******************************************************************
  * \fn sfx_error_t SIGFOX_API_get_info(sfx_u8* returned_info);
  * \brief This function returns internal Sigfox Library information 
- *        depending on the request type ( mentionned in sfx_enum_request_types )
+ *        depending on the request type ( mentioned in sfx_enum_request_types )
  *
  * If request type is : 
  *

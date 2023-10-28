@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2017 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2017 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -69,7 +68,7 @@ extern "C" {
 /* Next ranges are kept for future use (additional crypto schemes, additional user code) */
 #define SE_APP_GET_ACTIVE_FW_INFO                 (0x20UL)    /*!< User Application retrieves an Active Firmware Info */
 #define SE_APP_VALIDATE_FW                        (0x21UL)    /*!< User Application validates an Active Firmware */
-#define SE_APP_GET_FW_STATE                       (0x22UL)    /*!< User Application retreives an Active Firmware state */
+#define SE_APP_GET_FW_STATE                       (0x22UL)    /*!< User Application retrieves an Active Firmware state */
 
 /* System configuration access (NVIC...) */
 #define SE_SYS_SAVE_DISABLE_IRQ                   (0x60UL)    /*!< System command to disable IRQ, returning to caller IRQ configuration */
@@ -173,5 +172,3 @@ SE_ErrorStatus SE_CallGate(SE_FunctionIDTypeDef eID, SE_StatusTypeDef *const peS
 #endif
 
 #endif /* SE_CALLGATE_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

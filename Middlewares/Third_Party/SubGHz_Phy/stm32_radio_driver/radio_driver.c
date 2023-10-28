@@ -31,8 +31,7 @@
   ******************************************************************************
   */
 /* Includes ------------------------------------------------------------------*/
-#include "radio_conf.h"
-#include "radio_driver.h" 
+#include "radio_driver.h"
 #include "mw_log_conf.h"
 
 /* External variables ---------------------------------------------------------*/
@@ -112,13 +111,6 @@ typedef struct FskBandwidth_s
 #endif /* DCDC_ENABLE */
 
 /* Private macro -------------------------------------------------------------*/
-
-#define SX_FREQ_TO_CHANNEL( channel, freq )                                  \
-do                                                                           \
-{                                                                            \
-  channel = (uint32_t) ((((uint64_t) freq)<<25)/(XTAL_FREQ) );               \
-}while( 0 )
-
 /* Private variables ---------------------------------------------------------*/
 /*!
  * \brief Holds the internal operating mode of the radio
@@ -178,6 +170,8 @@ static const FskBandwidth_t FskBandwidths[] =
 
 /*!
  * \brief This set SMPS drive capability wrt. RF mode
+ *
+ * \param [in]  level       SMPS maximum drive capability level
  */
 static void Radio_SMPS_Set( uint8_t level );
 
@@ -185,25 +179,6 @@ static void Radio_SMPS_Set( uint8_t level );
  * \brief IRQ Callback radio function
  */
 static DioIrqHandler RadioOnDioIrqCb;
-
-/*!
- * \brief Write command to the radio
- *
- * \param [in]  SetCommand    The Write Command
- * \param [out] buffer        A pointer command buffer
- * \param [in]  size          Size in byte of the command buffer
- */
-static void SUBGRF_WriteCommand( SUBGHZ_RadioSetCmd_t Command, uint8_t *pBuffer,
-                                        uint16_t Size );
-/*!
- * \brief Read command to the radio
- *
- * \param [in]  GetCommand    The Read Command
- * \param [out] buffer        A pointer command buffer
- * \param [in]  size          Size in byte of the command buffer
- */
-static void SUBGRF_ReadCommand( SUBGHZ_RadioGetCmd_t Command, uint8_t *pBuffer,
-                                        uint16_t Size );
 
 /* Exported functions ---------------------------------------------------------*/
 void SUBGRF_Init( DioIrqHandler dioIrq )
@@ -238,6 +213,10 @@ void SUBGRF_Init( DioIrqHandler dioIrq )
         SUBGRF_WriteRegister( REG_XTA_TRIM, XTAL_DEFAULT_CAP_VALUE );
         SUBGRF_WriteRegister( REG_XTB_TRIM, XTAL_DEFAULT_CAP_VALUE );
     }
+
+    /* WORKAROUND - Trimming the output voltage power_ldo to 3.3V */
+    SUBGRF_WriteRegister(REG_DRV_CTRL, 0x7 << 1);
+
     /* Init RF Switch */
     RBI_Init();
 
@@ -422,9 +401,7 @@ void SUBGRF_SetRxBoosted( uint32_t timeout )
 
     OperatingMode = MODE_RX;
 
-    /* ST_WORKAROUND_BEGIN: Sigfox patch > 0x96 replaced by 0x97 */
     SUBGRF_WriteRegister( REG_RX_GAIN, 0x97 ); // max LNA gain, increase current by ~2mA for around ~3dB in sensitivity
-    /* ST_WORKAROUND_END */
 
     buf[0] = ( uint8_t )( ( timeout >> 16 ) & 0xFF );
     buf[1] = ( uint8_t )( ( timeout >> 8 ) & 0xFF );
@@ -490,7 +467,6 @@ void SUBGRF_SetLoRaSymbNumTimeout( uint8_t symbNum )
 
 void SUBGRF_SetRegulatorMode( void )
 {
-    /* ST_WORKAROUND_BEGIN: Get RegulatorMode value from RBI */
     RadioRegulatorMode_t mode;
 
     if ( ( 1UL == RBI_IsDCDC() ) && ( 1UL == DCDC_ENABLE ) )
@@ -501,7 +477,6 @@ void SUBGRF_SetRegulatorMode( void )
     {
         mode = USE_LDO ;
     }
-    /* ST_WORKAROUND_END */
     SUBGRF_WriteCommand( RADIO_SET_REGULATORMODE, ( uint8_t* )&mode, 1 );
 }
 
@@ -546,6 +521,12 @@ void SUBGRF_CalibrateImage( uint32_t freq )
     {
         calFreq[0] = 0x6B;
         calFreq[1] = 0x6F;
+    }
+    else /* freq <= 425000000*/
+    {
+        /* [ 156MHz - 171MHz ] */
+        calFreq[0] = 0x29;
+        calFreq[1] = 0x2B ;
     }
     SUBGRF_WriteCommand( RADIO_CALIBRATEIMAGE, calFreq, 2 );
 }
@@ -611,9 +592,7 @@ void SUBGRF_SetRfFrequency( uint32_t frequency )
         SUBGRF_CalibrateImage( frequency );
         ImageCalibrated = true;
     }
-    /* ST_WORKAROUND_BEGIN: Simplified frequency calculation */
-    SX_FREQ_TO_CHANNEL(chan, frequency);   
-    /* ST_WORKAROUND_END */
+    SX_FREQ_TO_CHANNEL(chan, frequency);
     buf[0] = ( uint8_t )( ( chan >> 24 ) & 0xFF );
     buf[1] = ( uint8_t )( ( chan >> 16 ) & 0xFF );
     buf[2] = ( uint8_t )( ( chan >> 8 ) & 0xFF );
@@ -638,51 +617,78 @@ RadioPacketTypes_t SUBGRF_GetPacketType( void )
     return PacketType;
 }
 
-void SUBGRF_SetTxParams( uint8_t paSelect, int8_t power, RadioRampTimes_t rampTime ) 
+void SUBGRF_SetTxParams( uint8_t paSelect, int8_t power, RadioRampTimes_t rampTime )
 {
     uint8_t buf[2];
+    int32_t max_power;
 
-    if( paSelect == RFO_LP )
+    if (paSelect == RFO_LP)
     {
-        if( power == 15 )
+        max_power = RBI_GetRFOMaxPowerConfig(RBI_RFO_LP_MAXPOWER);
+        if (power >  max_power)
         {
-            SUBGRF_SetPaConfig( 0x06, 0x00, 0x01, 0x01 );
+          power = max_power;
         }
-        else
+        if (max_power == 14)
         {
-            SUBGRF_SetPaConfig( 0x04, 0x00, 0x01, 0x01 );
+            SUBGRF_SetPaConfig(0x04, 0x00, 0x01, 0x01);
+            power = 0x0E - (max_power - power);
         }
-        if( power >= 14 )
+        else if (max_power == 10)
         {
-            power = 14;
+            SUBGRF_SetPaConfig(0x01, 0x00, 0x01, 0x01);
+            power = 0x0D - (max_power - power);
         }
-        else if( power < -17 )
+        else /*default 15dBm*/
+        {
+            SUBGRF_SetPaConfig(0x07, 0x00, 0x01, 0x01);
+            power = 0x0E - (max_power - power);
+        }
+        if (power < -17)
         {
             power = -17;
         }
-        SUBGRF_WriteRegister( REG_OCP, 0x18 ); // current max is 80 mA for the whole device
+        SUBGRF_WriteRegister(REG_OCP, 0x18);   /* current max is 80 mA for the whole device*/
     }
-    else // rfo_hp
+    else /* rfo_hp*/
     {
-        // WORKAROUND - Better Resistance of the SX1262 Tx to Antenna Mismatch, see DS_SX1261-2_V1.2 datasheet chapter 15.2
-        // RegTxClampConfig = @address 0x08D8
-        SUBGRF_WriteRegister( REG_TX_CLAMP, SUBGRF_ReadRegister( REG_TX_CLAMP ) | ( 0x0F << 1 ) );
-        // WORKAROUND END
-
-        SUBGRF_SetPaConfig( 0x04, 0x07, 0x00, 0x01 );
-        if( power > 22 )
+        /* WORKAROUND - Better Resistance of the RFO High Power Tx to Antenna Mismatch, see STM32WL Erratasheet*/
+        SUBGRF_WriteRegister(REG_TX_CLAMP, SUBGRF_ReadRegister(REG_TX_CLAMP) | (0x0F << 1));
+        /* WORKAROUND END*/
+        max_power = RBI_GetRFOMaxPowerConfig(RBI_RFO_HP_MAXPOWER);
+        if (power > max_power)
         {
-            power = 22;
+            power = max_power;
         }
-        else if( power < -9 )
+        if (max_power == 20)
+        {
+            SUBGRF_SetPaConfig(0x03, 0x05, 0x00, 0x01);
+            power = 0x16 - (max_power - power);
+        }
+        else if (max_power == 17)
+        {
+            SUBGRF_SetPaConfig(0x02, 0x03, 0x00, 0x01);
+            power = 0x16 - (max_power - power);
+        }
+        else if (max_power == 14)
+        {
+            SUBGRF_SetPaConfig(0x02, 0x02, 0x00, 0x01);
+            power = 0x0E - (max_power - power);
+        }
+        else /*22dBm*/
+        {
+            SUBGRF_SetPaConfig(0x04, 0x07, 0x00, 0x01);
+            power = 0x16 - (max_power - power);
+        }
+        if (power < -9)
         {
             power = -9;
         }
-        SUBGRF_WriteRegister( REG_OCP, 0x38 ); // current max 160mA for the whole device
+        SUBGRF_WriteRegister(REG_OCP, 0x38);   /*current max 160mA for the whole device*/
     }
     buf[0] = power;
-    buf[1] = ( uint8_t )rampTime;
-    SUBGRF_WriteCommand( RADIO_SET_TXPARAMS, buf, 2 );
+    buf[1] = (uint8_t)rampTime;
+    SUBGRF_WriteCommand(RADIO_SET_TXPARAMS, buf, 2);
 }
 
 void SUBGRF_SetModulationParams( ModulationParams_t *modulationParams )
@@ -708,9 +714,7 @@ void SUBGRF_SetModulationParams( ModulationParams_t *modulationParams )
         buf[2] = tempVal & 0xFF;
         buf[3] = modulationParams->Params.Gfsk.ModulationShaping;
         buf[4] = modulationParams->Params.Gfsk.Bandwidth;
-        /* ST_WORKAROUND_BEGIN: Simplified frequency calculation */
         SX_FREQ_TO_CHANNEL(tempVal, modulationParams->Params.Gfsk.Fdev);
-        /* ST_WORKAROUND_END */
         buf[5] = ( tempVal >> 16 ) & 0xFF;
         buf[6] = ( tempVal >> 8 ) & 0xFF;
         buf[7] = ( tempVal& 0xFF );
@@ -839,14 +843,12 @@ void SUBGRF_SetBufferBaseAddress( uint8_t txBaseAddress, uint8_t rxBaseAddress )
     SUBGRF_WriteCommand( RADIO_SET_BUFFERBASEADDRESS, buf, 2 );
 }
 
-RadioStatus_t SUBGRF_GetStatus( void )
+RadioPhyStatus_t SUBGRF_GetStatus( void )
 {
     uint8_t stat = 0;
-    RadioStatus_t status = { .Value = 0 };
+    RadioPhyStatus_t status = { .Value = 0 };
 
-    /* ST_WORKAROUND_BEGIN: Read the Device Status by the GET_STATUS command (HAL limitations) */
     SUBGRF_ReadCommand( RADIO_GET_STATUS, &stat, 1 );
-    /* ST_WORKAROUND_END */
     status.Fields.CmdStatus = ( stat & ( 0x07 << 1 ) ) >> 1;
     status.Fields.ChipMode = ( stat & ( 0x07 << 4 ) ) >> 4;
     return status;
@@ -1029,7 +1031,7 @@ void SUBGRF_SetSwitch( uint8_t paSelect, RFState_t rxtx )
     RBI_ConfigRFSwitch(state);
 }
 
-uint8_t SUBGRF_SetRfTxPower( int8_t power ) 
+uint8_t SUBGRF_SetRfTxPower( int8_t power )
 {
     uint8_t paSelect= RFO_LP;
 
@@ -1073,7 +1075,7 @@ uint32_t SUBGRF_GetRadioWakeUpTime( void )
     return RF_WAKEUP_TIME;
 }
 
-/* HAL_SUBGHz Callbacks definitions */ 
+/* HAL_SUBGHz Callbacks definitions */
 void HAL_SUBGHZ_TxCpltCallback(SUBGHZ_HandleTypeDef *hsubghz)
 {
     RadioOnDioIrqCb( IRQ_TX_DONE );
@@ -1129,6 +1131,11 @@ void HAL_SUBGHZ_HeaderValidCallback(SUBGHZ_HandleTypeDef *hsubghz)
     RadioOnDioIrqCb( IRQ_HEADER_VALID );
 }
 
+void HAL_SUBGHZ_LrFhssHopCallback(SUBGHZ_HandleTypeDef *hsubghz)
+{
+    RadioOnDioIrqCb( IRQ_LR_FHSS_HOP );
+}
+
 static void Radio_SMPS_Set(uint8_t level)
 {
   if ( 1U == RBI_IsDCDC() )
@@ -1149,7 +1156,6 @@ uint8_t SUBGRF_GetFskBandwidthRegValue( uint32_t bandwidth )
         return( 0x1F );
     }
 
-    /* ST_WORKAROUND_BEGIN: Simplified loop */
     for( i = 0; i < ( sizeof( FskBandwidths ) / sizeof( FskBandwidth_t ) ); i++ )
     {
         if ( bandwidth < FskBandwidths[i].bandwidth )
@@ -1157,7 +1163,6 @@ uint8_t SUBGRF_GetFskBandwidthRegValue( uint32_t bandwidth )
             return FskBandwidths[i].RegValue;
         }
     }
-    /* ST_WORKAROUND_END */
     // ERROR: Value not found
     while( 1 );
 }
@@ -1165,10 +1170,10 @@ void SUBGRF_GetCFO( uint32_t bitRate, int32_t *cfo)
 {
   uint8_t BwMant[] = {4, 8, 10, 12};
   /* read demod bandwidth: mant bit4:3, exp bits 2:0 */
-  uint8_t reg = (SUBGRF_ReadRegister( SUBGHZ_BWSEL ));
+  uint8_t reg = (SUBGRF_ReadRegister( SUBGHZ_BWSELR ));
   uint8_t bandwidth_mant = BwMant[( reg >> 3 ) & 0x3];
   uint8_t bandwidth_exp = reg & 0x7;
-  uint32_t cf_fs = XTAL_FREQ / ( bandwidth_mant * ( 1 << ( bandwidth_exp - 1 )));
+  uint32_t cf_fs = XTAL_FREQ / ( bandwidth_mant * ( 1 << ( bandwidth_exp + 1 )));
   uint32_t cf_osr = cf_fs / bitRate;
   uint8_t interp = 1;
   /* calculate demod interpolation factor */
@@ -1183,8 +1188,8 @@ void SUBGRF_GetCFO( uint32_t bitRate, int32_t *cfo)
   /* calculate demod sampling frequency */
   uint32_t fs = cf_fs* interp;
   /* get the cfo registers */
-  int32_t cfo_bin = ( SUBGRF_ReadRegister( SUBGHZ_CFO_H ) & 0xF ) << 8;
-  cfo_bin |= SUBGRF_ReadRegister( SUBGHZ_CFO_L );
+  int32_t cfo_bin = ( SUBGRF_ReadRegister( SUBGHZ_GCFORH ) & 0xF ) << 8;
+  cfo_bin |= SUBGRF_ReadRegister( SUBGHZ_GCFORL );
   /* negate if 12 bits sign bit is 1 */
   if (( cfo_bin & 0x800 ) == 0x800 )
   {
@@ -1194,4 +1199,3 @@ void SUBGRF_GetCFO( uint32_t bitRate, int32_t *cfo)
   /* shift by 5 first to not saturate, cfo_bin on 12bits */
   *cfo = ((int32_t)( cfo_bin * ( fs >> 5 ))) >> ( 12 - 5 );
 }
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

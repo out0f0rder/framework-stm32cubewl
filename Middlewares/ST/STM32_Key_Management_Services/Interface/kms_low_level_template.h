@@ -1,3 +1,4 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file    kms_low_level.h
@@ -7,21 +8,24 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
 
 #ifndef KMS_LOW_LEVEL_H
 #define KMS_LOW_LEVEL_H
 
 /* Includes ------------------------------------------------------------------*/
+#include "stm32wlxx_hal.h"
+/* USER CODE BEGIN KMS_LOW_LEVEL_Includes */
+/* USER CODE END KMS_LOW_LEVEL_Includes */
 
 /** @addtogroup Key_Management_Services Key Management Services (KMS)
   * @{
@@ -32,7 +36,13 @@
   */
 
 /* Exported types ------------------------------------------------------------*/
+/* USER CODE BEGIN KMS_LOW_LEVEL_Exported_Types */
+/* USER CODE END KMS_LOW_LEVEL_Exported_Types */
+
 /* Exported constants --------------------------------------------------------*/
+/* USER CODE BEGIN KMS_LOW_LEVEL_Exported_Constants */
+/* USER CODE END KMS_LOW_LEVEL_Exported_Constants */
+
 /** @addtogroup KMS_LL_Exported_Constants Exported Constants
   * @{
   */
@@ -47,15 +57,25 @@
   */
 
 /* Exported functions prototypes ---------------------------------------------*/
+/* USER CODE BEGIN KMS_LOW_LEVEL_Exported_Function_Prototypes */
+/* USER CODE END KMS_LOW_LEVEL_Exported_Function_Prototypes */
 
 /** @addtogroup KMS_LL_Exported_Functions Exported Functions
   * @{
   */
+CK_RV KMS_LL_Initialize(void);
+CK_RV KMS_LL_Finalize(void);
+
 CK_RV KMS_LL_FLASH_Read(void *pDestination, const void *pSource, uint32_t Length);
 
 #ifdef KMS_SE_CHECK_PARAMS
 void KMS_LL_IsBufferInSecureEnclave(void *pBuffer, uint32_t Size);
 #endif /* KMS_SE_CHECK_PARAMS */
+
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+CK_RV KMS_LL_DataStorageKey_Init(void);
+CK_RV KMS_LL_GetRandomData(uint32_t *pRandomData);
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 
 void KMS_LL_ReportError(uint32_t Error);
 
@@ -87,5 +107,3 @@ static inline uint32_t KMS_LL_GetLR(void)
   */
 
 #endif /* KMS_LOW_LEVEL_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

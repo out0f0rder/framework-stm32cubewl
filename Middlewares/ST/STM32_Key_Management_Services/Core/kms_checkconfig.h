@@ -6,13 +6,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -83,6 +82,16 @@ KMS_ECDSA and KMS_EC_SECP256"
 #endif /* KMS_IMPORT_BLOB_CHUNK_SIZE */
 
 #endif /* KMS_IMPORT_BLOB */
+
+/*
+ * KMS_ENCRYPT_DECRYPT_BLOB
+ */
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+#if !defined(KMS_NVM_ENABLED)
+#error "KMS_ENCRYPT_DECRYPT_BLOB requires KMS_NVM_ENABLED"
+#endif /* !KMS_NVM_ENABLED */
+
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 
 /*
  * KMS_MEM_USE_HEAP_ALLOCATOR & KMS_MEM_USE_POOL_ALLOCATOR & KMS_MEM_USE_CUSTOM_ALLOCATOR
@@ -279,6 +288,15 @@ KMS_ECDSA and KMS_EC_SECP256"
 #error "KMS_OBJECTS requires at least one of KMS_NVM_DYNAMIC_ENABLED and KMS_VM_DYNAMIC_ENABLED"
 #endif /* !KMS_NVM_DYNAMIC_ENABLED && !KMS_VM_DYNAMIC_ENABLED */
 #endif /* KMS_OBJECTS */
+
+/*
+ * KMS_SECURE_COUNTERS
+ */
+#if defined(KMS_SECURE_COUNTERS)
+#if !defined(KMS_NVM_DYNAMIC_ENABLED) && !defined(KMS_VM_DYNAMIC_ENABLED)
+#error "KMS_SECURE_COUNTERS  requires at least one of KMS_NVM_DYNAMIC_ENABLED and KMS_VM_DYNAMIC_ENABLED"
+#endif /* !KMS_NVM_DYNAMIC_ENABLED && !KMS_VM_DYNAMIC_ENABLED*/
+#endif /* KMS_SECURE_COUNTERS */
 
 /*
  * KMS_PKCS11_GET_FUNCTION_LIST_SUPPORT
@@ -495,5 +513,3 @@ KMS_ECDSA and KMS_EC_SECP256"
 #endif /* KMS_SHA256 */
 
 #endif /* KMS_CHECKCONFIG_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

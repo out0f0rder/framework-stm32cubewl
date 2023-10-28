@@ -33,6 +33,7 @@
   * @brief   Secure Element identity and keys
   ******************************************************************************
   */
+
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef __SOFT_SE_IDENTITY_H__
 #define __SOFT_SE_IDENTITY_H__
@@ -40,6 +41,18 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Exported Includes --------------------------------------------------------*/
+/* USER CODE BEGIN Includes */
+
+/* USER CODE END Includes */
+
+/* Exported types ------------------------------------------------------------*/
+/* USER CODE BEGIN ET */
+
+/* USER CODE END ET */
+
+/* Exported constants --------------------------------------------------------*/
 
 /*!
  ******************************************************************************
@@ -72,34 +85,22 @@ extern "C" {
  ******************************************************************************
  ******************************************************************************
  */
-
 /*!
- * When set to 1 DevEui is LORAWAN_DEVICE_EUI
- * When set to 0 DevEui is automatically set with a value provided by MCU platform
+ * End-device IEEE EUI (big endian)
+ * When set to 00,00,00,00,00,00,00,00 DevEui is automatically set with a value provided by MCU platform
  */
-#define STATIC_DEVICE_EUI                                  0
-
-/*!
- * end-device IEEE EUI (big endian)
- */
-#define LORAWAN_DEVICE_EUI                                 { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
+#define LORAWAN_DEVICE_EUI                                 00,00,00,00,00,00,00,00
 
 /*!
  * App/Join server IEEE EUI (big endian)
  */
-#define LORAWAN_JOIN_EUI                                   { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
-
-/*!
- * When set to 1 DevAddr is LORAWAN_DEVICE_ADDRESS
- * When set to 0 DevAddr is automatically set with a value provided by a pseudo
- *      random generator seeded with a value provided by the MCU platform
- */
-#define STATIC_DEVICE_ADDRESS                              0
+#define LORAWAN_JOIN_EUI                                   01,01,01,01,01,01,01,01
 
 /*!
  * Device address on the network (big endian)
+ * When set to 00,00,00,00 DevAddr is automatically set with a value provided by MCU platform
  */
-#define LORAWAN_DEVICE_ADDRESS                             ( uint32_t )0x00000000
+#define LORAWAN_DEVICE_ADDRESS                             00,00,00,00
 
 /*!
  * Application root key
@@ -125,15 +126,21 @@ extern "C" {
  * Format commissioning keys
  */
 #define RAW_TO_INT8A(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) {0x##a,0x##b,0x##c,0x##d,\
-                                                        0x##e,0x##f,0x##g,0x##h,\
-                                                        0x##i,0x##j,0x##k,0x##l,\
-                                                        0x##m,0x##n,0x##o,0x##p}
+                                                       0x##e,0x##f,0x##g,0x##h,\
+                                                       0x##i,0x##j,0x##k,0x##l,\
+                                                       0x##m,0x##n,0x##o,0x##p}
+
+#define RAW8_TO_INT8A(a,b,c,d) 0x##a##b##c##d
+#define RAW32_TO_INT8A(a,b,c,d,e,f,g,h) {0x##a,0x##b,0x##c,0x##d,\
+                                         0x##e,0x##f,0x##g,0x##h}
 
 #define FORMAT_KEY(...) RAW_TO_INT8A(__VA_ARGS__)
+#define FORMAT8_KEY(...) RAW8_TO_INT8A(__VA_ARGS__)
+#define FORMAT32_KEY(...) RAW32_TO_INT8A(__VA_ARGS__)
 
-#if (USE_LRWAN_1_1_X_CRYPTO == 1)
+#if (defined( LORAMAC_VERSION ) && ( LORAMAC_VERSION == 0x01010100 ))
 #define SESSION_KEYS_LIST                                                                                           \
-           {                                                                                                        \
+        {                                                                                                           \
             /*!                                                                                                     \
              * Join session integrity key (Dynamically updated)                                                     \
              * WARNING: NOT USED FOR 1.0.x DEVICES                                                                  \
@@ -183,8 +190,16 @@ extern "C" {
              */                                                                                                     \
             .KeyID    = APP_S_KEY,                                                                                  \
             .KeyValue = FORMAT_KEY(LORAWAN_APP_S_KEY),                                                              \
+        },                                                                                                          \
+        {                                                                                                           \
+            /*!                                                                                                     \
+             * Datablock MIC key                                                                                    \
+             */                                                                                                     \
+            .KeyID    = DATABLOCK_INT_KEY,                                                                          \
+            .KeyValue = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+                          0x00 },                                                                                   \
         },
-#else /* USE_LRWAN_1_1_X_CRYPTO == 0 */
+#else
 #define SESSION_KEYS_LIST                                                                                           \
         {                                                                                                           \
             /*!                                                                                                     \
@@ -199,8 +214,16 @@ extern "C" {
              */                                                                                                     \
             .KeyID    = APP_S_KEY,                                                                                  \
             .KeyValue = FORMAT_KEY(LORAWAN_APP_S_KEY),                                                              \
+        },                                                                                                          \
+        {                                                                                                           \
+            /*!                                                                                                     \
+             * Datablock MIC key                                                                                    \
+             */                                                                                                     \
+            .KeyID    = DATABLOCK_INT_KEY,                                                                          \
+            .KeyValue = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+                          0x00 },                                                                                   \
         },
-#endif /* USE_LRWAN_1_1_X_CRYPTO */
+#endif /* LORAMAC_VERSION */
 
 #if (LORAMAC_MAX_MC_CTX == 1)
 #define SESSION_MC_KEYS_LIST                                                                                        \
@@ -372,7 +395,17 @@ extern "C" {
             .KeyValue = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
                           0x00 },                                                                                   \
         },                                                                                                          \
-    },
+    }
+
+#define SOFT_SE_ID_LIST                                                                                             \
+    .SeNvmDevJoinKey.DevEui = FORMAT32_KEY(LORAWAN_DEVICE_EUI),                                                     \
+    .SeNvmDevJoinKey.JoinEui = FORMAT32_KEY(LORAWAN_JOIN_EUI),                                                      \
+    .SeNvmDevJoinKey.DevAddrOTAA = FORMAT8_KEY(LORAWAN_DEVICE_ADDRESS),                                             \
+    .SeNvmDevJoinKey.DevAddrABP = FORMAT8_KEY(LORAWAN_DEVICE_ADDRESS)                                               \
+
+/* USER CODE BEGIN EC */
+
+/* USER CODE END EC */
 
 #ifdef __cplusplus
 }

@@ -1,3 +1,4 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file    kms_config.h
@@ -7,16 +8,16 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef KMS_CONFIG_H
@@ -244,6 +245,19 @@ extern "C" {
 #define KMS_IMPORT_BLOB_CHUNK_SIZE      (512U)
 
 /**
+  * @brief KMS_SECURE_COUNTERS Uncomment the below line to support KMS secure counters
+  * @note  Mandatory to handle counter objects through specific KMS services
+  * @note  Requires @ref KMS_NVM_ENABLED or @ref KMS_VM_DYNAMIC_ENABLED to be defined
+  */
+#define KMS_SECURE_COUNTERS
+
+/**
+  * @brief KMS_ENCRYPT_DECRYPT_BLOB Uncomment the below line to enable the encryption of the blobs within the KMS data storage
+  * @note  Requires @ref KMS_NVM_ENABLED to be defined
+  */
+#define KMS_ENCRYPT_DECRYPT_BLOB
+
+/**
   * @}
   */
 
@@ -256,8 +270,7 @@ extern "C" {
   * @brief KMS_MEM_USE_HEAP_ALLOCATOR Uncomment the below line to perform dynamic allocation in HEAP
   * @note  KMS will use standard malloc and free APIs
   * @note  Requires a dynamic allocator provided by the toolchain like dlmalloc
-  * @note  KMS_MEM_USE_HEAP_ALLOCATOR, KMS_MEM_USE_POOL_ALLOCATOR and KMS_MEM_USE_CUSTOM_ALLOCATOR are
-           mutually exclusive
+  * @note  KMS_MEM_USE_HEAP_ALLOCATOR, KMS_MEM_USE_POOL_ALLOCATOR and KMS_MEM_USE_CUSTOM_ALLOCATOR are mutually exclusive
   */
 #define KMS_MEM_USE_HEAP_ALLOCATOR
 
@@ -265,8 +278,7 @@ extern "C" {
   * @brief KMS_MEM_USE_POOL_ALLOCATOR Uncomment the below line to perform dynamic allocation using internal pool
   *        allocator
   * @note  Requires a pool definition in a file called kms_mem_pool_def.h (see kms_mem_pool_def_template.h for example)
-  * @note  KMS_MEM_USE_HEAP_ALLOCATOR, KMS_MEM_USE_POOL_ALLOCATOR and KMS_MEM_USE_CUSTOM_ALLOCATOR are
-           mutually exclusive
+  * @note  KMS_MEM_USE_HEAP_ALLOCATOR, KMS_MEM_USE_POOL_ALLOCATOR and KMS_MEM_USE_CUSTOM_ALLOCATOR are mutually exclusive
   */
 #define KMS_MEM_USE_POOL_ALLOCATOR
 
@@ -551,6 +563,3 @@ extern "C" {
 #endif
 
 #endif /* KMS_CONFIG_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-

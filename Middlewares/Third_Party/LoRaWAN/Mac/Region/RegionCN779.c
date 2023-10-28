@@ -39,9 +39,7 @@
   ******************************************************************************
   */
 #include "radio.h"
-#include "RegionCommon.h"
 #include "RegionCN779.h"
-#include "lorawan_conf.h"  /* REGION_* */
 
 // Definitions
 #define CHANNELS_MASK_SIZE              1
@@ -50,8 +48,14 @@
 /*
  * Non-volatile module context.
  */
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
 static RegionNvmDataGroup1_t* RegionNvmGroup1;
 static RegionNvmDataGroup2_t* RegionNvmGroup2;
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+// static RegionNvmDataGroup1_t* RegionNvmGroup1; /* Unused for this region */
+static RegionNvmDataGroup2_t* RegionNvmGroup2;
+static Band_t* RegionBands;
+#endif /* REGION_VERSION */
 
 // Static functions
 static bool VerifyRfFreq( uint32_t freq )
@@ -148,13 +152,11 @@ PhyParam_t RegionCN779GetPhyParam( GetPhyParams_t* getPhy )
             phyParam.Value = MaxPayloadOfDatarateCN779[getPhy->Datarate];
             break;
         }
-        /* ST_WORKAROUND_BEGIN: Keep repeater feature */
         case PHY_MAX_PAYLOAD_REPEATER:
         {
             phyParam.Value = MaxPayloadOfDatarateRepeaterCN779[getPhy->Datarate];
             break;
         }
-        /* ST_WORKAROUND_END */
         case PHY_DUTY_CYCLE:
         {
             phyParam.Value = CN779_DUTY_CYCLE_ENABLED;
@@ -185,6 +187,7 @@ PhyParam_t RegionCN779GetPhyParam( GetPhyParams_t* getPhy )
             phyParam.Value = REGION_COMMON_DEFAULT_JOIN_ACCEPT_DELAY2;
             break;
         }
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
         case PHY_MAX_FCNT_GAP:
         {
             phyParam.Value = REGION_COMMON_DEFAULT_MAX_FCNT_GAP;
@@ -195,6 +198,13 @@ PhyParam_t RegionCN779GetPhyParam( GetPhyParams_t* getPhy )
             phyParam.Value = ( REGION_COMMON_DEFAULT_ACK_TIMEOUT + randr( -REGION_COMMON_DEFAULT_ACK_TIMEOUT_RND, REGION_COMMON_DEFAULT_ACK_TIMEOUT_RND ) );
             break;
         }
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+        case PHY_RETRANSMIT_TIMEOUT:
+        {
+            phyParam.Value = ( REGION_COMMON_DEFAULT_RETRANSMIT_TIMEOUT + randr( -REGION_COMMON_DEFAULT_RETRANSMIT_TIMEOUT_RND, REGION_COMMON_DEFAULT_RETRANSMIT_TIMEOUT_RND ) );
+            break;
+        }
+#endif /* REGION_VERSION */
         case PHY_DEF_DR1_OFFSET:
         {
             phyParam.Value = REGION_COMMON_DEFAULT_RX1_DR_OFFSET;
@@ -300,8 +310,13 @@ PhyParam_t RegionCN779GetPhyParam( GetPhyParams_t* getPhy )
 void RegionCN779SetBandTxDone( SetBandTxDoneParams_t* txDone )
 {
 #if defined( REGION_CN779 )
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
     RegionCommonSetBandTxDone( &RegionNvmGroup1->Bands[RegionNvmGroup2->Channels[txDone->Channel].Band],
                                txDone->LastTxAirTime, txDone->Joined, txDone->ElapsedTimeSinceStartUp );
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+    RegionCommonSetBandTxDone( &RegionBands[RegionNvmGroup2->Channels[txDone->Channel].Band],
+                               txDone->LastTxAirTime, txDone->Joined, txDone->ElapsedTimeSinceStartUp );
+#endif /* REGION_VERSION */
 #endif /* REGION_CN779 */
 }
 
@@ -322,11 +337,19 @@ void RegionCN779InitDefaults( InitDefaultsParams_t* params )
                 return;
             }
 
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
             RegionNvmGroup1 = (RegionNvmDataGroup1_t*) params->NvmGroup1;
             RegionNvmGroup2 = (RegionNvmDataGroup2_t*) params->NvmGroup2;
 
             // Default bands
             memcpy1( ( uint8_t* )RegionNvmGroup1->Bands, ( uint8_t* )bands, sizeof( Band_t ) * CN779_MAX_NB_BANDS );
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+            RegionNvmGroup2 = (RegionNvmDataGroup2_t*) params->NvmGroup2;
+            RegionBands = (Band_t*) params->Bands;
+
+            // Default bands
+            memcpy1( ( uint8_t* )RegionBands, ( uint8_t* )bands, sizeof( Band_t ) * CN779_MAX_NB_BANDS );
+#endif /* REGION_VERSION */
 
             // Default channels
             RegionNvmGroup2->Channels[0] = ( ChannelParams_t ) CN779_LC1;
@@ -552,7 +575,6 @@ bool RegionCN779RxConfig( RxConfigParams_t* rxConfig, int8_t* datarate )
         Radio.SetRxConfig( modem, rxConfig->Bandwidth, phyDr, 1, 0, 8, rxConfig->WindowTimeout, false, 0, false, 0, 0, true, rxConfig->RxContinuous );
     }
 
-    /* ST_WORKAROUND_BEGIN: Keep repeater feature */
     if( rxConfig->RepeaterSupport == true )
     {
         maxPayload = MaxPayloadOfDatarateRepeaterCN779[dr];
@@ -562,11 +584,8 @@ bool RegionCN779RxConfig( RxConfigParams_t* rxConfig, int8_t* datarate )
         maxPayload = MaxPayloadOfDatarateCN779[dr];
     }
     Radio.SetMaxPayloadLength( modem, maxPayload + LORAMAC_FRAME_PAYLOAD_OVERHEAD_SIZE );
-    /* ST_WORKAROUND_END */
 
-    /* ST_WORKAROUND_BEGIN: Print Rx config */
     RegionCommonRxConfigPrint(rxConfig->RxSlot, frequency, dr);
-    /* ST_WORKAROUND_END */
 
     *datarate = (uint8_t) dr;
     return true;
@@ -580,7 +599,11 @@ bool RegionCN779TxConfig( TxConfigParams_t* txConfig, int8_t* txPower, TimerTime
 #if defined( REGION_CN779 )
     RadioModems_t modem;
     int8_t phyDr = DataratesCN779[txConfig->Datarate];
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
     int8_t txPowerLimited = RegionCommonLimitTxPower( txConfig->TxPower, RegionNvmGroup1->Bands[RegionNvmGroup2->Channels[txConfig->Channel].Band].TxMaxPower );
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+    int8_t txPowerLimited = RegionCommonLimitTxPower( txConfig->TxPower, RegionBands[RegionNvmGroup2->Channels[txConfig->Channel].Band].TxMaxPower );
+#endif /* REGION_VERSION */
     uint32_t bandwidth = RegionCommonGetBandwidth( txConfig->Datarate, BandwidthsCN779 );
     int8_t phyTxPower = 0;
 
@@ -600,9 +623,7 @@ bool RegionCN779TxConfig( TxConfigParams_t* txConfig, int8_t* txPower, TimerTime
         modem = MODEM_LORA;
         Radio.SetTxConfig( modem, phyTxPower, 0, bandwidth, phyDr, 1, 8, false, true, 0, 0, false, 4000 );
     }
-    /* ST_WORKAROUND_BEGIN: Print Tx config */
     RegionCommonTxConfigPrint(RegionNvmGroup2->Channels[txConfig->Channel].Frequency, txConfig->Datarate);
-    /* ST_WORKAROUND_END */
 
     // Update time-on-air
     *txTimeOnAir = GetTimeOnAir( txConfig->Datarate, txConfig->PktLen );
@@ -813,7 +834,12 @@ int8_t RegionCN779TxParamSetupReq( TxParamSetupReqParams_t* txParamSetupReq )
 int8_t RegionCN779DlChannelReq( DlChannelReqParams_t* dlChannelReq )
 {
     uint8_t status = 0x03;
+
 #if defined( REGION_CN779 )
+    if( dlChannelReq->ChannelId >= ( CHANNELS_MASK_SIZE * 16 ) )
+    {
+        return 0;
+    }
 
     // Verify if the frequency is supported
     if( VerifyRfFreq( dlChannelReq->Rx1Frequency ) == false )
@@ -863,7 +889,11 @@ LoRaMacStatus_t RegionCN779NextChannel( NextChanParams_t* nextChanParams, uint8_
     countChannelsParams.Datarate = nextChanParams->Datarate;
     countChannelsParams.ChannelsMask = RegionNvmGroup2->ChannelsMask;
     countChannelsParams.Channels = RegionNvmGroup2->Channels;
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
     countChannelsParams.Bands = RegionNvmGroup1->Bands;
+#elif (defined( REGION_VERSION ) && ( REGION_VERSION == 0x02010001 ))
+    countChannelsParams.Bands = RegionBands;
+#endif /* REGION_VERSION */
     countChannelsParams.MaxNbChannels = CN779_MAX_NB_CHANNELS;
     countChannelsParams.JoinChannels = &joinChannels;
 
@@ -979,6 +1009,7 @@ bool RegionCN779ChannelsRemove( ChannelRemoveParams_t* channelRemove  )
 #endif /* REGION_CN779 */
 }
 
+#if (defined( REGION_VERSION ) && ( REGION_VERSION == 0x01010003 ))
 void RegionCN779SetContinuousWave( ContinuousWaveParams_t* continuousWave )
 {
 #if defined( REGION_CN779 )
@@ -992,6 +1023,7 @@ void RegionCN779SetContinuousWave( ContinuousWaveParams_t* continuousWave )
     Radio.SetTxContinuousWave( frequency, phyTxPower, continuousWave->Timeout );
 #endif /* REGION_CN779 */
 }
+#endif /* REGION_VERSION */
 
 uint8_t RegionCN779ApplyDrOffset( uint8_t downlinkDwellTime, int8_t dr, int8_t drOffset )
 {

@@ -8,13 +8,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -1175,6 +1174,50 @@ CK_RV KMS_IF_LockServices(CK_ULONG_PTR pServices, CK_ULONG ulCount)
 #endif /* KMS_NIKMS_ROUTER_BYPASS */
 
 /**
+  * @brief  This function is called to call KMS service that will increment the specified counter
+  * @param  hSession is the handle of the session
+  * @param  hObject is the object handle
+  * @param  pCounterValue points to the location that receives the current counter value (NULL if not used)
+  * @retval Operation status
+  */
+#if !defined(KMS_NIKMS_ROUTER_BYPASS)
+CK_RV KMS_IF_CounterIncrement(CK_SESSION_HANDLE hSession,
+                              CK_OBJECT_HANDLE hObject,
+                              CK_ULONG_PTR pCounterValue)
+{
+  CK_RV ck_rv_ret_status = CKR_FUNCTION_FAILED;
+
+  /* KMS_Entry call */
+  ck_rv_ret_status = KMS_EntryCallGate(tKMS_GetCluster() | KMS_COUNTER_INCREMENT_FCT_ID,
+                                       hSession, hObject, pCounterValue);
+
+  return ck_rv_ret_status;
+}
+#endif /* KMS_NIKMS_ROUTER_BYPASS */
+
+/**
+  * @brief  This function is called to call KMS service that will get the value of the specified counter
+  * @param  hSession is the handle of the session
+  * @param  hObject is the object handle
+  * @param  pCounterValue points to the location that receives the current counter value
+  * @retval Operation status
+  */
+#if !defined(KMS_NIKMS_ROUTER_BYPASS)
+CK_RV KMS_IF_CounterGetValue(CK_SESSION_HANDLE hSession,
+                             CK_OBJECT_HANDLE hObject,
+                             CK_ULONG_PTR pCounterValue)
+{
+  CK_RV ck_rv_ret_status = CKR_FUNCTION_FAILED;
+
+  /* KMS_Entry call */
+  ck_rv_ret_status = KMS_EntryCallGate(tKMS_GetCluster() | KMS_COUNTER_GET_VALUE_FCT_ID,
+                                       hSession, hObject, pCounterValue);
+
+  return ck_rv_ret_status;
+}
+#endif /* KMS_NIKMS_ROUTER_BYPASS */
+
+/**
   * @}
   */
 
@@ -1183,4 +1226,3 @@ CK_RV KMS_IF_LockServices(CK_ULONG_PTR pServices, CK_ULONG ulCount)
   */
 
 #endif /* KMS_ENABLED */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

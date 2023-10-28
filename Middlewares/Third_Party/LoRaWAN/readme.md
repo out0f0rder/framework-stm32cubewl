@@ -6,7 +6,7 @@
      \____ \| ___ |    (_   _) ___ |/ ___)  _ \
      _____) ) ____| | | || |_| ____( (___| | | |
     (______/|_____)_|_|_| \__)_____)\____)_| |_|
-        (C)2013-2020 Semtech
+        (C)2013-2021 Semtech
 
      ___ _____ _   ___ _  _____ ___  ___  ___ ___
     / __|_   _/_\ / __| |/ / __/ _ \| _ \/ __| __|
@@ -22,9 +22,9 @@ This project has 2 active branches in place.
 
 | Branch        | L2 spec       | RP spec   | Tag/Milestone       | Class     | Comments      |
 | ------------- |:-------------:|:---------:|:---------:|:---------:|:--------------|
-| | [1.0.3](https://lora-alliance.org/resource-hub/lorawanr-specification-v103) | [v1.0.3revA](https://www.lora-alliance.org/resource-hub/lorawanr-regional-parameters-v103reva) | [v4.4.7](https://github.com/Lora-net/LoRaMac-node/releases/tag/v4.4.7) | A/B/C | LoRaWAN L2 1.0.3 - **_Released_ (last release based on 1.0.3)** |
-| [master](https://github.com/Lora-net/LoRaMac-node/tree/master) | [1.0.4](https://lora-alliance.org/resource-hub/lorawan-104-specification-package) | [2-1.0.1](https://lora-alliance.org/sites/default/files/2020-02/rp_2-1.0.1.pdf) | [v4.5.0](https://github.com/Lora-net/LoRaMac-node/releases/tag/v4.5.0) | A/B/C |  LoRaWAN L2 1.0.4 |
-| [develop](https://github.com/Lora-net/LoRaMac-node/tree/develop) | [1.0.4](https://lora-alliance.org/resource-hub/lorawan-104-specification-package) / [1.1.1](https://lora-alliance.org/resource-hub/lorawanr-specification-v11) | [2-1.0.1](https://lora-alliance.org/sites/default/files/2020-02/rp_2-1.0.1.pdf) | [M 4.6.0](https://github.com/Lora-net/LoRaMac-node/milestone/3) | A/B/C |  LoRaWAN L2 1.0.4 / 1.1.1 |
+| | [1.0.4](https://resources.lora-alliance.org/technical-specifications/ts001-1-0-4-lorawan-l2-1-0-4-specification) / [1.1.0](https://resources.lora-alliance.org/technical-specifications/lorawan-specification-v1-1) + [FCntDwn ERRATA](https://resources.lora-alliance.org/technical-specifications/fopts-encryption-usage-of-fcntdwn-errata-on-the-lorawan-l2-1-1-specification) | [2-1.0.1](https://resources.lora-alliance.org/technical-specifications/rp2-1-0-1-lorawan-regional-parameters) | [v4.6.0](https://github.com/Lora-net/LoRaMac-node/releases/tag/v4.6.0) | A/B/C | LoRaWAN L2 1.0.4 - **_Released_** |
+| [master](https://github.com/Lora-net/LoRaMac-node/tree/master) | [1.0.4](https://resources.lora-alliance.org/technical-specifications/ts001-1-0-4-lorawan-l2-1-0-4-specification) / [1.1.0](https://resources.lora-alliance.org/technical-specifications/lorawan-specification-v1-1) + [FCntDwn ERRATA](https://resources.lora-alliance.org/technical-specifications/fopts-encryption-usage-of-fcntdwn-errata-on-the-lorawan-l2-1-1-specification) | [2-1.0.1](https://resources.lora-alliance.org/technical-specifications/rp2-1-0-1-lorawan-regional-parameters) | [M 4.7.0](https://github.com/Lora-net/LoRaMac-node/milestone/10) | A/B/C |  LoRaWAN L2 1.0.4 / 1.1.0 |
+| [v5.0.0-branch](https://github.com/Lora-net/LoRaMac-node/tree/v5.0.0-branch) | [1.0.4](https://resources.lora-alliance.org/technical-specifications/ts001-1-0-4-lorawan-l2-1-0-4-specification) / [1.1.0](https://resources.lora-alliance.org/technical-specifications/lorawan-specification-v1-1) + [FCntDwn ERRATA](https://resources.lora-alliance.org/technical-specifications/fopts-encryption-usage-of-fcntdwn-errata-on-the-lorawan-l2-1-1-specification) | [2-1.0.3](https://resources.lora-alliance.org/technical-specifications/rp2-1-0-3-lorawan-regional-parameters) | [M 5.0.0](https://github.com/Lora-net/LoRaMac-node/milestone/11) | A/B/C |  LoRaWAN L2 1.0.4 / 1.1.0 - Adds support for LR-FHSS modulation |
 
 This project fully implements ClassA, ClassB and ClassC end-device classes and it also provides SX1272/73, SX1276/77/78/79, SX1261/2 and LR1110 radio drivers.
 
@@ -48,7 +48,7 @@ For each currently supported platform example applications are provided.
 
 This project currently provides support for the below platforms.  
 This project can be ported to other platforms using different MCU than the ones currently supported.  
-The [Porting Guide](http://stackforce.github.io/LoRaMac-doc/_p_o_r_t_i_n_g__g_u_i_d_e.html) document provides guide lines on how to port the project to other platforms.
+The [Porting Guide](https://stackforce.github.io/LoRaMac-doc/LoRaMac-doc-v4.5.1/_p_o_r_t_i_n_g__g_u_i_d_e.html) document provides guide lines on how to port the project to other platforms.
 
 * NAMote72
   * [NAMote72 platform documentation](doc/NAMote72-platform.md)
@@ -381,6 +381,24 @@ $ make
   * ping-pong     - elf format
   * ping-pong.bin - binary format
   * ping-pong.hex - hex format
+
+### Serial console NVM management
+
+The `periodic-uplink-lpp` and `fuota-test-01` examples allow to reset the NVM storage through the serial interface.
+
+In order to reset the NVM contents one must hit `ESC` + `N` keyboard keys on a serial terminal.
+
+The serial terminal will show the following after `ESC` + `N` keyboard keys are hit. After resetting the end-device the clean NVM will be used.
+
+```text
+ESC + N
+
+
+NVM factory reset succeed
+
+
+PLEASE RESET THE END-DEVICE
+```
 
 ## Acknowledgments
 

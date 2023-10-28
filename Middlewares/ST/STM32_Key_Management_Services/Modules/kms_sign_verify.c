@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -250,6 +249,12 @@ CK_RV     sign_verify_init(CK_SESSION_HANDLE hSession,
       {
         e_ret_status = CKR_OBJECT_HANDLE_INVALID;
       }
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+      if (pkms_object != NULL_PTR)
+      {
+        KMS_Objects_ReleasePointer(hKey, pkms_object);
+      }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
       break;
     }
 #endif /* KMS_RSA && (KMS_RSA & KMS_FCT_SIGN | KMS_RSA & KMS_FCT_VERIFY)*/
@@ -295,6 +300,12 @@ CK_RV     sign_verify_init(CK_SESSION_HANDLE hSession,
       {
         e_ret_status = CKR_OBJECT_HANDLE_INVALID;
       }
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+      if (pkms_object != NULL_PTR)
+      {
+        KMS_Objects_ReleasePointer(hKey, pkms_object);
+      }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
       break;
     }
 #endif /* KMS_ECDSA && (KMS_ECDSA & KMS_FCT_SIGN | KMS_ECDSA & KMS_FCT_VERIFY)*/
@@ -422,6 +433,12 @@ CK_RV     sign_verify_init(CK_SESSION_HANDLE hSession,
         /* Can not retrieve proper key handle */
         e_ret_status = CKR_OBJECT_HANDLE_INVALID;
       }
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+      if (pkms_object != NULL_PTR)
+      {
+        KMS_Objects_ReleasePointer(hKey, pkms_object);
+      }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
       break;
     }
 #endif /* KMS_AES_CMAC && (KMS_AES_CMAC & KMS_FCT_SIGN | KMS_AES_CMAC & KMS_FCT_VERIFY)*/
@@ -567,8 +584,8 @@ CK_RV     KMS_Sign(CK_SESSION_HANDLE hSession,         /* the session's handle *
 #endif /* KMS_RSA || KMS_ECDSA */
 
 #if defined(KMS_SHA1) && (KMS_SHA1 & KMS_FCT_DIGEST) \
-    && ((defined(KMS_RSA) && (KMS_RSA & KMS_FCT_SIGN)) \
-     || (defined(KMS_ECDSA) && (KMS_ECDSA & KMS_FCT_SIGN)))
+&& ((defined(KMS_RSA) && (KMS_RSA & KMS_FCT_SIGN)) \
+ || (defined(KMS_ECDSA) && (KMS_ECDSA & KMS_FCT_SIGN)))
 #if defined(KMS_RSA) && (KMS_RSA & KMS_FCT_SIGN)
     case CKM_SHA1_RSA_PKCS:
 #endif /* KMS_RSA & KMS_FCT_SIGN */
@@ -617,8 +634,8 @@ CK_RV     KMS_Sign(CK_SESSION_HANDLE hSession,         /* the session's handle *
 #endif /* KMS_SHA1 & KMS_FCT_DIGEST && (KMS_RSA & KMS_FCT_SIGN || KMS_ECDSA & KMS_FCT_SIGN) */
 
 #if defined(KMS_SHA256) && (KMS_SHA256 & KMS_FCT_DIGEST) \
-    && ((defined(KMS_RSA) && (KMS_RSA & KMS_FCT_SIGN)) \
-     || (defined(KMS_ECDSA) && (KMS_ECDSA & KMS_FCT_SIGN)))
+&& ((defined(KMS_RSA) && (KMS_RSA & KMS_FCT_SIGN)) \
+ || (defined(KMS_ECDSA) && (KMS_ECDSA & KMS_FCT_SIGN)))
 #if defined(KMS_RSA) && (KMS_RSA & KMS_FCT_SIGN)
     case CKM_SHA256_RSA_PKCS:
 #endif /* KMS_RSA & KMS_FCT_SIGN */
@@ -867,6 +884,12 @@ CK_RV     KMS_Sign(CK_SESSION_HANDLE hSession,         /* the session's handle *
       /* No valid object pointer found for the requested key handle */
       e_ret_status = CKR_OBJECT_HANDLE_INVALID;
     }
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+    if (pkms_object != NULL_PTR)
+    {
+      KMS_Objects_ReleasePointer(KMS_GETSESSION(hSession).hKey, pkms_object);
+    }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
   }
 
   /* Upon completion error or not:
@@ -1018,8 +1041,8 @@ CK_RV  KMS_Verify(CK_SESSION_HANDLE hSession,         /* the session's handle */
 #endif /* KMS_RSA & KMS_FCT_VERIFY || KMS_ECDSA & KMS_FCT_VERIFY */
 
 #if defined(KMS_SHA1) && (KMS_SHA1 & KMS_FCT_DIGEST) \
-    && ((defined(KMS_RSA) && (KMS_RSA & KMS_FCT_VERIFY)) \
-     || (defined(KMS_ECDSA) && (KMS_ECDSA & KMS_FCT_VERIFY)))
+&& ((defined(KMS_RSA) && (KMS_RSA & KMS_FCT_VERIFY)) \
+ || (defined(KMS_ECDSA) && (KMS_ECDSA & KMS_FCT_VERIFY)))
 #if defined(KMS_RSA) && (KMS_RSA & KMS_FCT_VERIFY)
     case CKM_SHA1_RSA_PKCS:
 #endif /* KMS_RSA & KMS_FCT_VERIFY */
@@ -1068,8 +1091,8 @@ CK_RV  KMS_Verify(CK_SESSION_HANDLE hSession,         /* the session's handle */
 #endif /* KMS_SHA1 & KMS_FCT_DIGEST && (KMS_RSA & KMS_FCT_VERIFY || KMS_ECDSA & KMS_FCT_VERIFY) */
 
 #if defined(KMS_SHA256) && (KMS_SHA256 & KMS_FCT_DIGEST) \
-    && ((defined(KMS_RSA) && (KMS_RSA & KMS_FCT_VERIFY)) \
-     || (defined(KMS_ECDSA) && (KMS_ECDSA & KMS_FCT_VERIFY)))
+&& ((defined(KMS_RSA) && (KMS_RSA & KMS_FCT_VERIFY)) \
+ || (defined(KMS_ECDSA) && (KMS_ECDSA & KMS_FCT_VERIFY)))
 #if defined(KMS_RSA) && (KMS_RSA & KMS_FCT_VERIFY)
     case CKM_SHA256_RSA_PKCS:
 #endif /* KMS_RSA & KMS_FCT_VERIFY */
@@ -1276,7 +1299,7 @@ CK_RV  KMS_Verify(CK_SESSION_HANDLE hSession,         /* the session's handle */
             e_ret_status = CKR_FUNCTION_FAILED;
             break;
           }
-          /* We prepare the memory buffer strucure */
+          /* We prepare the memory buffer structure */
           mb_st.pmBuf = p_ctx->tmpbuffer;
           mb_st.mUsed = 0;
           mb_st.mSize = (int16_t)sizeof(p_ctx->tmpbuffer);
@@ -1423,6 +1446,12 @@ CK_RV  KMS_Verify(CK_SESSION_HANDLE hSession,         /* the session's handle */
     {
       e_ret_status = CKR_OBJECT_HANDLE_INVALID;
     }
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+    if (pkms_object != NULL_PTR)
+    {
+      KMS_Objects_ReleasePointer(KMS_GETSESSION(hSession).hKey, pkms_object);
+    }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
   }
 
   /* Upon completion error or not:
@@ -1458,4 +1487,3 @@ CK_RV  KMS_Verify(CK_SESSION_HANDLE hSession,         /* the session's handle */
   */
 
 #endif /* KMS_ENABLED */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

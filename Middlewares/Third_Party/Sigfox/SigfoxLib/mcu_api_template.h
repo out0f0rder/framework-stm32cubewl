@@ -137,12 +137,12 @@ sfx_u8 MCU_API_free(sfx_u8* ptr);
 /*!******************************************************************
  * \fn sfx_u8 MCU_API_get_voltage_temperature(sfx_u16 *voltage_idle, sfx_u16 *voltage_tx, sfx_s16 *temperature)
  * \brief Get voltage and temperature for Out of band frames
- * Value must respect the units bellow for <B>backend compatibility</B>
+ * Value must respect the units below for <B>backend compatibility</B>
  *
  * \param[in] none
  * \param[out] sfx_u16 *voltage_idle             Device's voltage in Idle state (mV)
  * \param[out] sfx_u16 *voltage_tx               Device's voltage in Tx state (mV) - for the last transmission
- * \param[out] sfx_s16 *temperature              Device's temperature in 1/10 of degrees celcius
+ * \param[out] sfx_s16 *temperature              Device's temperature in 1/10 of degrees celsius
  *
  * \retval SFX_ERR_NONE:                         No error
  * \retval MCU_ERR_API_VOLT_TEMP:                Get voltage/temperature error
@@ -178,7 +178,7 @@ sfx_u8 MCU_API_delay(sfx_delay_t delay_type);
  * in the library (covered zones, etc.)
  *
  * \param[in] none
- * \param[out] sfx_u8 read_data[SFX_NVMEM_BLOCK_SIZE] Pointer to the data bloc to write with the data stored in memory
+ * \param[out] sfx_u8 read_data[SFX_NVMEM_BLOCK_SIZE] Pointer to the data block to write with the data stored in memory
  *
  * \retval SFX_ERR_NONE:                         No error
  * \retval MCU_ERR_API_GETNVMEM:                 Read nvmem error
@@ -188,14 +188,14 @@ sfx_u8 MCU_API_get_nv_mem(sfx_u8 read_data[SFX_NVMEM_BLOCK_SIZE]);
 /*!******************************************************************
  * \fn sfx_u8 MCU_API_set_nv_mem(sfx_u8 data_to_write[SFX_NVMEM_BLOCK_SIZE])
  * \brief This function writes data pointed by data_to_write to non
- * volatile memory.<BR> It is strongly recommanded to use NV memory
+ * volatile memory.<BR> It is strongly recommended to use NV memory
  * like EEPROM since this function is called at each SIGFOX_API_send_xxx.
  * The size of the data to write is \link SFX_NVMEM_BLOCK_SIZE \endlink
  * bytes.
  * CAREFUL : this value can change according to the features included
  * in the library (covered zones, etc.)
  *
- * \param[in] sfx_u8 data_to_write[SFX_NVMEM_BLOCK_SIZE] Pointer to data bloc to be written in memory
+ * \param[in] sfx_u8 data_to_write[SFX_NVMEM_BLOCK_SIZE] Pointer to data block to be written in memory
  * \param[out] none
  *
  * \retval SFX_ERR_NONE:                         No error

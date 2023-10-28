@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -31,6 +30,7 @@
 #include "kms_sign_verify.h"            /* KMS signature & verification services */
 #include "kms_key_mgt.h"                /* KMS key management services */
 #include "kms_objects.h"                /* KMS objects services */
+#include "kms_counter.h"                /* KMS counter services */
 #include "kms_low_level.h"
 #ifdef KMS_EXT_TOKEN_ENABLED
 #include "kms_ext_token.h"              /* KMS external token services */
@@ -1178,7 +1178,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -1368,7 +1368,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -1555,7 +1555,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -1736,7 +1736,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -1924,7 +1924,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -2106,7 +2106,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -2204,7 +2204,7 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
         KMS_LL_IsBufferInSecureEnclave((void *)(pMechanism->pParameter), pMechanism->ulParameterLen * sizeof(CK_BYTE));
         if (KMS_Entry_CheckMechanismContent(pMechanism) != CKR_OK)
         {
-          e_ret_status = CKR_MECHANISM_PARAM_INVALID;
+          e_ret_status = CKR_MECHANISM_INVALID;
           break;
         }
       }
@@ -2423,6 +2423,75 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
     }
 #endif /* KMS_SE_LOCK_SERVICES */
 
+#if defined(KMS_SECURE_COUNTERS)
+    case KMS_COUNTER_INCREMENT_FCT_ID:
+    {
+      /* PKCS#11 API declaration leading to this case: */
+      /* CK_DECLARE_FUNCTION(CK_RV, C_STM_CounterIncrement)(CK_SESSION_HANDLE hSession,
+                                                            CK_OBJECT_HANDLE hObject,
+                                                            CK_ULONG_PTR pCounterValue); */
+      CK_SESSION_HANDLE hSession;
+      CK_OBJECT_HANDLE  hObject;
+      CK_ULONG_PTR      pCounterValue;
+
+      hSession          = va_arg(arguments, CK_SESSION_HANDLE);
+      hObject           = va_arg(arguments, CK_OBJECT_HANDLE);
+      pCounterValue     = va_arg(arguments, CK_ULONG_PTR);
+
+#ifdef KMS_SE_CHECK_PARAMS
+      /* Check that pointers are outside Secure Engine               */
+      /* If buffer point inside Firewall, then a NVIC_SystemReset is */
+      /* called by the function                                      */
+
+      if (pCounterValue != NULL)
+      {
+        KMS_LL_IsBufferInSecureEnclave((void *)pCounterValue, sizeof(CK_ULONG));
+      }
+#endif /* KMS_SE_CHECK_PARAMS */
+
+      if (!KMS_IS_INITIALIZED())
+      {
+        e_ret_status = CKR_CRYPTOKI_NOT_INITIALIZED;
+        break;
+      }
+
+      e_ret_status = KMS_CounterIncrement(hSession, hObject, pCounterValue);
+      break;
+    }
+
+    case KMS_COUNTER_GET_VALUE_FCT_ID:
+    {
+      /* PKCS#11 API declaration leading to this case: */
+      /* CK_DECLARE_FUNCTION(CK_RV, C_STM_CounterGetValue)(CK_SESSION_HANDLE hSession,
+                                                           CK_OBJECT_HANDLE hObject,
+                                                           CK_ULONG_PTR pCounterValue); */
+      CK_SESSION_HANDLE     hSession;
+      CK_OBJECT_HANDLE      hObject;
+      CK_ULONG_PTR          pCounterValue;
+
+      hSession          = va_arg(arguments, CK_SESSION_HANDLE);
+      hObject           = va_arg(arguments, CK_OBJECT_HANDLE);
+      pCounterValue     = va_arg(arguments, CK_ULONG_PTR);
+
+#ifdef KMS_SE_CHECK_PARAMS
+      /* Check that pointers are outside Secure Engine               */
+      /* If buffer point inside Firewall, then a NVIC_SystemReset is */
+      /* called by the function                                      */
+
+      KMS_LL_IsBufferInSecureEnclave((void *)pCounterValue, sizeof(CK_ULONG));
+#endif /* KMS_SE_CHECK_PARAMS */
+
+      if (!KMS_IS_INITIALIZED())
+      {
+        e_ret_status = CKR_CRYPTOKI_NOT_INITIALIZED;
+        break;
+      }
+
+      e_ret_status = KMS_CounterGetValue(hSession, hObject, pCounterValue);
+      break;
+    }
+#endif  /* KMS_SECURE_COUNTERS */
+
     default:
     {
       e_ret_status = CKR_FUNCTION_NOT_SUPPORTED;
@@ -2450,4 +2519,3 @@ CK_RV KMS_Entry(KMS_FunctionID_t eID, va_list arguments)
   */
 
 #endif /* KMS_ENABLED */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

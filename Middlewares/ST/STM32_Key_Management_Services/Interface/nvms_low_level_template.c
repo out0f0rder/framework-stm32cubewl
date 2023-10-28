@@ -1,3 +1,4 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file    nvms_low_level.c
@@ -7,16 +8,16 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
 
 #include <string.h>
 #include <stdint.h>
@@ -24,6 +25,8 @@
 #include <stddef.h>
 
 #include "nvms_low_level.h"
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Includes */
+/* USER CODE END NVMS_LOW_LEVEL_Includes */
 
 /** @addtogroup Key_Management_Services Key Management Services (KMS)
   * @{
@@ -34,12 +37,32 @@
   */
 
 /* Private types -------------------------------------------------------------*/
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Private_Types */
+/* USER CODE END NVMS_LOW_LEVEL_Private_Types */
+
 /* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Private_Defines */
+/* USER CODE END NVMS_LOW_LEVEL_Private_Defines */
+
 /* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Private_Macros */
+/* USER CODE END NVMS_LOW_LEVEL_Private_Macros */
+
 /* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Private_Variables */
+/* USER CODE END NVMS_LOW_LEVEL_Private_Variables */
+
 /* Private function prototypes -----------------------------------------------*/
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Private_Function_Prototypes */
+/* USER CODE END NVMS_LOW_LEVEL_Private_Function_Prototypes */
+
 /* Private function ----------------------------------------------------------*/
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Private_Functions */
+/* USER CODE END NVMS_LOW_LEVEL_Private_Functions */
+
 /* Exported functions --------------------------------------------------------*/
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Private_Exported_Functions */
+/* USER CODE END NVMS_LOW_LEVEL_Private_Exported_Functions */
 
 /** @addtogroup KMS_NVMLL_Exported_Functions Exported Functions
   * @{
@@ -50,7 +73,8 @@
   */
 void NVMS_LL_Init(void)
 {
-
+  /* USER CODE BEGIN NVMS_LL_Init */
+  /* USER CODE END NVMS_LL_Init */
 }
 
 /**
@@ -65,11 +89,11 @@ void NVMS_LL_Init(void)
 /* Template version of the function */
 bool NVMS_LL_IsBlockErased(nvms_block_t block)
 {
+  /* USER CODE BEGIN NVMS_LL_IsBlockErased */
 
   return false;
+  /* USER CODE END NVMS_LL_IsBlockErased */
 }
-
-
 
 /**
   * @brief   Erases a block.
@@ -83,8 +107,10 @@ bool NVMS_LL_IsBlockErased(nvms_block_t block)
 /* Template version of the function */
 bool NVMS_LL_BlockErase(nvms_block_t block)
 {
+  /* USER CODE BEGIN NVMS_LL_BlockErase */
 
   return true;
+  /* USER CODE END NVMS_LL_BlockErase */
 }
 
 /**
@@ -103,10 +129,11 @@ bool NVMS_LL_BlockErase(nvms_block_t block)
 /* Template version of the function */
 bool NVMS_LL_Write(const uint8_t *source, uint8_t *destination, size_t size)
 {
+  /* USER CODE BEGIN NVMS_LL_Write */
   return true;
+  /* USER CODE END NVMS_LL_Write */
 }
 
-
 /**
   * @}
   */
@@ -118,6 +145,3 @@ bool NVMS_LL_Write(const uint8_t *source, uint8_t *destination, size_t size)
 /**
   * @}
   */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-

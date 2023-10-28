@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -142,7 +141,7 @@ CK_RV  KMS_CreateObject(CK_SESSION_HANDLE hSession,
   }
 
   /* The provided creation template should at least include one of the following:
-   * CKA_CERTIFICATE_TYPE, CKA_HW_FEATURE_TYPE or CKA_KEY_TYPE
+   * CKA_CERTIFICATE_TYPE, CKA_HW_FEATURE_TYPE, CKA_KEY_TYPE or CKA_STM_COUNTER_VALUE
    */
   if (KMS_FindAttributeInTemplate(pTemplate, ulCount, CKA_CERTIFICATE_TYPE, &p_attribut_value) != CKR_OK)
   {
@@ -150,8 +149,11 @@ CK_RV  KMS_CreateObject(CK_SESSION_HANDLE hSession,
     {
       if (KMS_FindAttributeInTemplate(pTemplate, ulCount, CKA_KEY_TYPE, &p_attribut_value) != CKR_OK)
       {
-        /* type attribute not found, object not valid */
-        return CKR_TEMPLATE_INCOMPLETE;
+        if (KMS_FindAttributeInTemplate(pTemplate, ulCount, CKA_STM_COUNTER_VALUE, &p_attribut_value) != CKR_OK)
+        {
+          /* type attribute not found, object not valid */
+          return CKR_TEMPLATE_INCOMPLETE;
+        }
       }
     }
   }
@@ -239,6 +241,10 @@ CK_RV  KMS_DestroyObject(CK_SESSION_HANDLE hSession,
 #else /* KMS_VM_DYNAMIC_ENABLED */
     e_ret_status = KMS_PlatfObjects_NvmRemoveObject(hObject);
 #endif /* KMS_VM_DYNAMIC_ENABLED */
+
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+    KMS_Objects_ReleasePointer(hObject, pkms_object);
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
   }
   else
   {
@@ -405,6 +411,9 @@ CK_RV KMS_GetAttributeValue(CK_SESSION_HANDLE hSession,  CK_OBJECT_HANDLE  hObje
       }
     }
 
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+    KMS_Objects_ReleasePointer(hObject, pkms_object);
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
   }
   else
   {
@@ -618,4 +627,3 @@ CK_RV KMS_FindObjectsFinal(CK_SESSION_HANDLE hSession)
   */
 
 #endif /* KMS_ENABLED */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

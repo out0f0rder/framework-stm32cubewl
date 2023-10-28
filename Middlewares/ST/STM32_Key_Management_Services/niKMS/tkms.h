@@ -8,13 +8,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -38,6 +37,7 @@ extern "C" {
 #include "kms_key_mgt.h"
 #include "kms_sign_verify.h"
 #include "kms_objects.h"
+#include "kms_counter.h"
 #endif /* KMS_NIKMS_ROUTER_BYPASS */
 #include "kms_interface.h"
 
@@ -1359,6 +1359,54 @@ KMS_IF_GenerateKeyPair( hSession, pMechanism, pPublicKeyTemplate, \
 #endif /* KMS_NIKMS_ROUTER_BYPASS */
 
 /**
+  * @brief  Redirection of PKCS11 vendor defined C_STM_CounterIncrement to access KMS service through Secure engine
+  * @note   C_STM_CounterIncrement increments the secure counter identified by hObject
+  * @param  hSession is the handle of the session
+  * @param  hObject is the object handle
+  * @param  pCounterValue points to the location that receives the current counter value (NULL if not used)
+  * @retval CKR_ATTRIBUTE_TYPE_INVALID
+  * @retval CKR_ATTRIBUTE_VALUE_INVALID
+  * @retval CKR_CRYPTOKI_NOT_INITIALIZED
+  * @retval CKR_SESSION_HANDLE_INVALID
+  * @retval CKR_FUNCTION_FAILED
+  * @retval CKR_FUNCTION_NOT_SUPPORTED
+  * @retval CKR_GENERAL_ERROR
+  * @retval CKR_OBJECT_HANDLE_INVALID
+  * @retval CKR_DEVICE_MEMORY
+  * @retval CKR_OK
+  */
+#if defined(KMS_NIKMS_ROUTER_BYPASS)
+#define C_STM_CounterIncrement( hSession, hObject, pCounterValue )\
+  KMS_CounterIncrement( hSession, hObject, pCounterValue )
+#else /* KMS_NIKMS_ROUTER_BYPASS */
+#define C_STM_CounterIncrement( hSession, hObject, pCounterValue )\
+  KMS_IF_CounterIncrement( hSession, hObject, pCounterValue )
+#endif /* KMS_NIKMS_ROUTER_BYPASS */
+
+/**
+  * @brief  Redirection of PKCS11 vendor defined C_STM_CounterGetValue to access KMS service through Secure engine
+  * @note   C_STM_CounterGetValue gets the current value of the secure counter identified by hObject
+  * @param  hSession is the handle of the session
+  * @param  hObject is the object handle
+  * @param  pCounterValue points to the location that receives the current counter value
+  * @retval CKR_ARGUMENTS_BAD
+  * @retval CKR_ATTRIBUTE_TYPE_INVALID
+  * @retval CKR_CRYPTOKI_NOT_INITIALIZED
+  * @retval CKR_SESSION_HANDLE_INVALID
+  * @retval CKR_FUNCTION_FAILED
+  * @retval CKR_FUNCTION_NOT_SUPPORTED
+  * @retval CKR_OBJECT_HANDLE_INVALID
+  * @retval CKR_OK
+  */
+#if defined(KMS_NIKMS_ROUTER_BYPASS)
+#define C_STM_CounterGetValue( hSession, hObject, pCounterValue )\
+  KMS_CounterGetValue( hSession, hObject, pCounterValue )
+#else /* KMS_NIKMS_ROUTER_BYPASS */
+#define C_STM_CounterGetValue( hSession, hObject, pCounterValue )\
+  KMS_IF_CounterGetValue( hSession, hObject, pCounterValue )
+#endif /* KMS_NIKMS_ROUTER_BYPASS */
+
+/**
   * @}
   */
 
@@ -1386,6 +1434,3 @@ uint32_t tKMS_GetCluster(void);
 #endif
 
 #endif /* TKMS_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-

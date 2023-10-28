@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -113,7 +112,9 @@ extern "C" {
 #define KMS_IMPORT_BLOB_FCT_ID            (KMS_WAIT_FOR_SLOT_EVENT_FCT_ID+0x01UL) /*!< C_STM_ImportBlob function ID */
 #define KMS_LOCK_KEYS_FCT_ID              (KMS_IMPORT_BLOB_FCT_ID+0x01UL)         /*!< C_STM_LockKeys function ID */
 #define KMS_LOCK_SERVICES_FCT_ID          (KMS_LOCK_KEYS_FCT_ID+0x01UL)           /*!< C_STM_LockServices function ID */
-#define KMS_LAST_ID_CHECK                 (KMS_LOCK_SERVICES_FCT_ID)              /*!< Last function ID */
+#define KMS_COUNTER_INCREMENT_FCT_ID      (KMS_LOCK_SERVICES_FCT_ID+0x01UL)       /*!< C_STM_CounterIncrement function ID */
+#define KMS_COUNTER_GET_VALUE_FCT_ID      (KMS_COUNTER_INCREMENT_FCT_ID+0x01UL)   /*!< C_STM_CounterGetValue function ID */
+#define KMS_LAST_ID_CHECK                 (KMS_COUNTER_GET_VALUE_FCT_ID)          /*!< Last function ID */
 
 /**
   * @brief KMS entry function ID type definition
@@ -165,6 +166,3 @@ CK_RV  KMS_Entry(KMS_FunctionID_t eID, va_list arguments);
 #endif
 
 #endif /* KMS_ENTRY_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-

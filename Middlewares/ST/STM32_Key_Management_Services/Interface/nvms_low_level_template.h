@@ -1,3 +1,4 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file    nvms_low_level.h
@@ -7,16 +8,16 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
 
 #ifndef NVMS_LOW_LEVEL_H
 #define NVMS_LOW_LEVEL_H
@@ -26,6 +27,8 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Includes */
+/* USER CODE END NVMS_LOW_LEVEL_Includes */
 
 /** @addtogroup Key_Management_Services Key Management Services (KMS)
   * @{
@@ -36,6 +39,8 @@ extern "C" {
   */
 
 /* Exported types ------------------------------------------------------------*/
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Exported_Types */
+/* USER CODE END NVMS_LOW_LEVEL_Exported_Types */
 
 /** @addtogroup KMS_NVMLL_Exported_Types Exported Types
   * @{
@@ -55,6 +60,8 @@ typedef enum
   */
 
 /* Exported constants --------------------------------------------------------*/
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Exported_Constants */
+/* USER CODE END NVMS_LOW_LEVEL_Exported_Constants */
 
 /** @addtogroup KMS_NVMLL_Exported_Constants Exported Constants
   * @{
@@ -68,13 +75,13 @@ typedef enum
   */
 #define NVMS_LL_PAGE_SIZE    8
 
-
 /**
   * @}
   */
 
-
 /* Exported functions prototypes ---------------------------------------------*/
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Exported_Function_Prototypes */
+/* USER CODE END NVMS_LOW_LEVEL_Exported_Function_Prototypes */
 
 /** @addtogroup KMS_NVMLL_Exported_Functions Exported Functions
   * @{
@@ -85,6 +92,8 @@ bool NVMS_LL_BlockErase(nvms_block_t block);
 bool NVMS_LL_Write(const uint8_t *source, uint8_t *destination, size_t size);
 
 /* Exported in line functions ------------------------------------------------*/
+/* USER CODE BEGIN NVMS_LOW_LEVEL_Exported_In_Line_Function */
+/* USER CODE END NVMS_LOW_LEVEL_Exported_In_Line_Function */
 
 /**
   * @brief   Returns the base address of the specified flash block
@@ -94,7 +103,9 @@ bool NVMS_LL_Write(const uint8_t *source, uint8_t *destination, size_t size);
 /* Template version */
 static inline uint32_t NVMS_LL_GetBlockAddress(nvms_block_t block)
 {
+  /* USER CODE BEGIN NVMS_LL_GetBlockAddress */
   return 0UL;
+  /* USER CODE END NVMS_LL_GetBlockAddress */
 }
 
 /**
@@ -105,8 +116,9 @@ static inline uint32_t NVMS_LL_GetBlockAddress(nvms_block_t block)
 /* Template version */
 static inline size_t NVMS_LL_GetBlockSize(void)
 {
-
+  /* USER CODE BEGIN NVMS_LL_GetBlockSize */
   return 0;
+  /* USER CODE END NVMS_LL_GetBlockSize */
 }
 
 /**
@@ -126,5 +138,3 @@ static inline size_t NVMS_LL_GetBlockSize(void)
 #endif
 
 #endif /* NVMS_LOW_LEVEL_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

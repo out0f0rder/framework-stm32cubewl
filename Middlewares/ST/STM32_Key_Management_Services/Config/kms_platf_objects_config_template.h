@@ -1,3 +1,4 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file    kms_platf_objects_config.h
@@ -7,16 +8,16 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
 
 /* Define to prevent recursive inclusion -------------------------------------*/
 #ifndef KMS_PLATF_OBJECTS_CONFIG_H
@@ -24,6 +25,8 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "kms_platf_objects_interface.h"
+/* USER CODE BEGIN KMS_PLATF_OBJECTS_CONFIG_Includes */
+/* USER CODE END KMS_PLATF_OBJECTS_CONFIG_Includes */
 
 #ifdef __cplusplus
 extern "C" {
@@ -38,6 +41,7 @@ extern "C" {
   */
 
 /* Exported constants --------------------------------------------------------*/
+/* USER CODE BEGIN KMS_PLATF_OBJECTS_CONFIG_Exported_Constants */
 
 /** @addtogroup KMS_PLATF_Exported_Constants Exported Constants
   * @note KMS support different type of objects, their respective ranges are
@@ -73,11 +77,15 @@ extern "C" {
   * @}
   */
 
+/* USER CODE END KMS_PLATF_OBJECTS_CONFIG_Exported_Constants */
+
 /*
  * Embedded objects definition
  *
  */
 #ifdef KMS_PLATF_OBJECTS_C
+/* USER CODE BEGIN KMS_PLATF_OBJECTS_CONFIG_Embedded_Objects_Definition */
+/* USER CODE END KMS_PLATF_OBJECTS_CONFIG_Embedded_Objects_Definition */
 
 /** @addtogroup KMS_PLATF_Private_Variables Private Variables
   * @{
@@ -89,6 +97,7 @@ extern "C" {
 const kms_obj_keyhead_t *const KMS_PlatfObjects_EmbeddedList[KMS_INDEX_MAX_EMBEDDED_OBJECTS -
                                                              KMS_INDEX_MIN_EMBEDDED_OBJECTS + 1] =
 {
+/* USER CODE BEGIN KMS_PlatfObjects_EmbeddedList */
   (kms_obj_keyhead_t *) NULL,       /* Index = 1 */
   (kms_obj_keyhead_t *) NULL,       /* Index = 2 */
   (kms_obj_keyhead_t *) NULL,       /* Index = 3 */
@@ -109,13 +118,13 @@ const kms_obj_keyhead_t *const KMS_PlatfObjects_EmbeddedList[KMS_INDEX_MAX_EMBED
   (kms_obj_keyhead_t *) NULL,       /* Index = 18 */
   (kms_obj_keyhead_t *) NULL,       /* Index = 19 */
   (kms_obj_keyhead_t *) NULL,       /* Index = 20 */
+/* USER CODE END KMS_PlatfObjects_EmbeddedList */
 };
 
 /**
   * @}
   */
 #endif /* KMS_PLATF_OBJECTS_C */
-
 
 /**
   * @}
@@ -130,6 +139,4 @@ const kms_obj_keyhead_t *const KMS_PlatfObjects_EmbeddedList[KMS_INDEX_MAX_EMBED
 #endif
 
 #endif /* KMS_PLATF_OBJECTS_CONFIG_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
 

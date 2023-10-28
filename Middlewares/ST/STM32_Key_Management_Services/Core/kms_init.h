@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -40,7 +39,10 @@ extern "C" {
 /** @addtogroup KMS_INIT_Exported_Constants Exported Constants
   * @{
   */
-#define KMS_SESSION_ID_INVALID          0x00U     /*!< Invalid session ID */
+#define KMS_SESSION_ID_INVALID          0x00000000UL     /*!< Invalid session ID */
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+#define KMS_SESSION_ID_INTERNAL         0xFFFF0000UL     /*!< Internal session ID */
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 
 #define KMS_HANDLE_KEY_NOT_KNOWN        0x00U     /*!< Unknown KMS key handle value */
 
@@ -89,6 +91,9 @@ typedef struct
 typedef struct
 {
   CK_BYTE               initialized;                          /*!< Initialization counter */
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+  CK_BYTE               key_initialized;                      /*!< Key initialization flag */
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
   CK_ULONG              sessionNb;                            /*!< Current opened session number */
   kms_session_desc_t    sessionList[KMS_NB_SESSIONS_MAX];     /*!< Session list table */
 } kms_manager_t;
@@ -222,5 +227,3 @@ CK_RV  KMS_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_MECHAN
 #endif
 
 #endif /* KMS_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -191,7 +191,7 @@ sfx_u8 SE_API_get_initial_pac(sfx_u8* initial_pac);
  * \param[in]  sfx_se_frame_type_t              When set to RC_SYNC, the frame must NOT be encrypted and rollover counter has to be added. Otherwise, treat it as a classic frame with encryption payload if needed.
  * \param[out] sfx_bool * send_rcsync           SFX_TRUE if a rsync frame needs to be sent, SFX_FALSE else
  * \param[out] sfx_u8 *frame_ptr                Pointer to the buffer to fill with built bitstream
- * \param[out] sfx_u8 *frame_length             Length of built bistream (including synchro bit/frame)
+ * \param[out] sfx_u8 *frame_length             Length of built bitstream (including synchro bit/frame)
  *
  * \retval SFX_ERR_NONE:                        No error
  * \retval SE_ERR_API_SECURE_UP_MSG             Error on SE_API_secure_uplink_message
@@ -206,7 +206,7 @@ sfx_u8 SE_API_secure_uplink_message(sfx_u8* customer_data,
 
 /*!******************************************************************
  * \fn sfx_u8 SE_API_verify_downlink_message(sfx_u8 *frame_ptr, sfx_bool *valid)
- * \brief Authentification (and payload decryption) of a received message
+ * \brief Authentication (and payload decryption) of a received message
  *
  * \param[in] sfx_u8 *frame_ptr                 Pointer to the received frame
  * \param[out] sfx_bool *valid                  SFX_TRUE when frame is correctly authenticated, else SFX_FALSE

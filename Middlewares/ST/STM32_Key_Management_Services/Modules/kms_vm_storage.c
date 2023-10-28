@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -312,7 +311,7 @@ static vms_data_storage_status_t scan_slots(vms_found_slot_t slotcallback,
     hdrp = (vms_data_header_t *)hdrp->fields.next;
 
     /* Special case end-of-chain */
-    if (hdrp->hdr8 == endp)
+    if ((hdrp->hdr8 == endp) || (hdrp->hdr8 + sizeof(vms_data_header_t) >= endp))
     {
       /* Calling end-of-scan callback if defined */
       endcallback(hdrp);
@@ -837,7 +836,7 @@ vms_error_t VMS_Init(void)
       return err;
     }
   }
-  return VMS_RAM_FAILURE;
+  return VMS_NOERROR;
 }
 
 /**
@@ -950,6 +949,13 @@ vms_error_t VMS_WriteDataWithType(vms_slot_t slot, size_t size, vms_data_type_t 
   else
   {
     oldused = (uint32_t)(vm.slots[slot]->fields.next->hdr8) - (uint32_t)(vm.slots[slot]->hdr8);
+
+    /* Remove the slot and compress the VM data storage */
+    err = remove_slot(slot);
+    if (err != VMS_NOERROR)
+    {
+      return err;
+    }
   }
 
   /* Position of the new data instance */
@@ -1113,4 +1119,3 @@ vms_error_t VMS_GetDataWithType(vms_slot_t slot, size_t *size_p, vms_data_type_t
 
 #endif /* KMS_VM_DYNAMIC_ENABLED */
 #endif /* KMS_ENABLED */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

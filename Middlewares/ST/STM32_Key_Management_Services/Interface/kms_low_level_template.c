@@ -1,3 +1,4 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file    kms_low_level.c
@@ -7,19 +8,24 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file
+  * in the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
+/* Define to prevent recursive inclusion -------------------------------------*/
+#define KMS_LOW_LEVEL_C
 
+/* Includes ------------------------------------------------------------------*/
 #include "kms.h"
 #include "kms_low_level.h"
+/* USER CODE BEGIN KMS_LOW_LEVEL_Includes */
+/* USER CODE END KMS_LOW_LEVEL_Includes */
 
 /** @addtogroup Key_Management_Services Key Management Services (KMS)
   * @{
@@ -30,12 +36,58 @@
   */
 
 /* Private types -------------------------------------------------------------*/
+/* USER CODE BEGIN KMS_LOW_LEVEL_Private_Types */
+/* USER CODE END KMS_LOW_LEVEL_Private_Types */
+
 /* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN KMS_LOW_LEVEL_Private_Defines */
+/* USER CODE END KMS_LOW_LEVEL_Private_Defines */
+
 /* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN KMS_LOW_LEVEL_Private_Macros */
+/* USER CODE END KMS_LOW_LEVEL_Private_Macros */
+
 /* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN KMS_LOW_LEVEL_Private_Variables */
+/* USER CODE END KMS_LOW_LEVEL_Private_Variables */
+
 /* Private function prototypes -----------------------------------------------*/
+/* USER CODE BEGIN KMS_LOW_LEVEL_Private_Function_Prototypes */
+/* USER CODE END KMS_LOW_LEVEL_Private_Function_Prototypes */
+
 /* Private function ----------------------------------------------------------*/
+/* USER CODE BEGIN KMS_LOW_LEVEL_Private_Functions */
+/* USER CODE END KMS_LOW_LEVEL_Private_Functions */
+
 /* Exported functions --------------------------------------------------------*/
+/* USER CODE BEGIN KMS_LOW_LEVEL_Private_Exported_Functions */
+/* USER CODE END KMS_LOW_LEVEL_Private_Exported_Functions */
+
+/** @addtogroup KMS_LL_Exported_Functions Exported Functions
+  * @{
+  */
+
+/**
+  * @brief  Initialize resources required for the low level services
+  * @retval Operation status
+  */
+CK_RV KMS_LL_Initialize(void)
+{
+  /* USER CODE BEGIN KMS_LL_Initialize */
+  return CKR_OK;
+  /* USER CODE END KMS_LL_Initialize */
+}
+
+/**
+  * @brief  Deinitialize the resources required for the low level services
+  * @retval Operation status
+  */
+CK_RV KMS_LL_Finalize(void)
+{
+  /* USER CODE BEGIN KMS_LL_Finalize */
+  return CKR_OK;
+  /* USER CODE END KMS_LL_Finalize */
+}
 
 /**
   * @brief  Read data from flash and store into buffer
@@ -47,7 +99,9 @@
   */
 CK_RV KMS_LL_FLASH_Read(void *pDestination, const void *pSource, uint32_t Length)
 {
+  /* USER CODE BEGIN KMS_LL_FLASH_Read */
   return CKR_OK;
+  /* USER CODE END KMS_LL_FLASH_Read */
 }
 
 #ifdef KMS_SE_CHECK_PARAMS
@@ -70,9 +124,35 @@ __attribute__((optimize("O0")))
   */
 void KMS_LL_IsBufferInSecureEnclave(void *pBuffer, uint32_t Size)
 {
-
+  /* USER CODE BEGIN KMS_LL_IsBufferInSecureEnclave */
+  /* USER CODE END KMS_LL_IsBufferInSecureEnclave */
 }
 #endif /* KMS_SE_CHECK_PARAMS */
+
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+/**
+  * @brief  Generate the KMS data storage key
+  * @retval Operation status
+  */
+CK_RV KMS_LL_DataStorageKey_Init(void)
+{
+  /* USER CODE BEGIN KMS_LL_DataStorageKey_Init */
+  return CKR_OK;
+  /* USER CODE END KMS_LL_DataStorageKey_Init */
+}
+
+/**
+  * @brief  Generate a random number
+  * @param  pRandomData buffer to store the random number
+  * @retval Operation status
+  */
+CK_RV KMS_LL_GetRandomData(uint32_t *pRandomData)
+{
+  /* USER CODE BEGIN KMS_LL_GetRandomData */
+  return CKR_FUNCTION_NOT_SUPPORTED;
+  /* USER CODE END KMS_LL_GetRandomData */
+}
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 
 /**
   * @brief  An error occurred
@@ -81,7 +161,9 @@ void KMS_LL_IsBufferInSecureEnclave(void *pBuffer, uint32_t Size)
   */
 void KMS_LL_ReportError(uint32_t Error)
 {
+  /* USER CODE BEGIN KMS_LL_ReportError */
 
+  /* USER CODE END KMS_LL_ReportError */
 }
 
 /**
@@ -89,7 +171,9 @@ void KMS_LL_ReportError(uint32_t Error)
   */
 void KMS_LL_ReportMemInit(void)
 {
+  /* USER CODE BEGIN KMS_LL_ReportMemInit */
 
+  /* USER CODE END KMS_LL_ReportMemInit */
 }
 
 /**
@@ -99,7 +183,9 @@ void KMS_LL_ReportMemInit(void)
   */
 void KMS_LL_ReportMemAlloc(uint32_t Size, void *pMem)
 {
+  /* USER CODE BEGIN KMS_LL_ReportMemAlloc */
 
+  /* USER CODE END KMS_LL_ReportMemAlloc */
 }
 
 /**
@@ -108,7 +194,9 @@ void KMS_LL_ReportMemAlloc(uint32_t Size, void *pMem)
   */
 void KMS_LL_ReportMemFree(void *pMem)
 {
+  /* USER CODE BEGIN KMS_LL_ReportMemFree */
 
+  /* USER CODE END KMS_LL_ReportMemFree */
 }
 
 /**
@@ -119,4 +207,6 @@ void KMS_LL_ReportMemFree(void *pMem)
   * @}
   */
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+/**
+  * @}
+  */

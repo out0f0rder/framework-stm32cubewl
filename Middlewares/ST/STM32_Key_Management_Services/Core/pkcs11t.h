@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -339,17 +338,18 @@ typedef CK_OBJECT_HANDLE CK_PTR CK_OBJECT_HANDLE_PTR;
 typedef CK_ULONG          CK_OBJECT_CLASS;
 
 /* The following classes of objects are defined: */
-#define CKO_DATA              0x00000000UL
-#define CKO_CERTIFICATE       0x00000001UL
-#define CKO_PUBLIC_KEY        0x00000002UL
-#define CKO_PRIVATE_KEY       0x00000003UL
-#define CKO_SECRET_KEY        0x00000004UL
-#define CKO_HW_FEATURE        0x00000005UL
-#define CKO_DOMAIN_PARAMETERS 0x00000006UL
-#define CKO_MECHANISM         0x00000007UL
-#define CKO_OTP_KEY           0x00000008UL
+#define CKO_DATA               0x00000000UL
+#define CKO_CERTIFICATE        0x00000001UL
+#define CKO_PUBLIC_KEY         0x00000002UL
+#define CKO_PRIVATE_KEY        0x00000003UL
+#define CKO_SECRET_KEY         0x00000004UL
+#define CKO_HW_FEATURE         0x00000005UL
+#define CKO_DOMAIN_PARAMETERS  0x00000006UL
+#define CKO_MECHANISM          0x00000007UL
+#define CKO_OTP_KEY            0x00000008UL
 
-#define CKO_VENDOR_DEFINED    0x80000000UL
+#define CKO_VENDOR_DEFINED     0x80000000UL
+#define CKO_STM_SECURE_COUNTER 0x80000001UL
 
 typedef CK_OBJECT_CLASS CK_PTR CK_OBJECT_CLASS_PTR;
 
@@ -589,6 +589,11 @@ typedef CK_ULONG          CK_ATTRIBUTE_TYPE;
 #define CKA_ALLOWED_MECHANISMS          (CKF_ARRAY_ATTRIBUTE|0x00000600UL)
 
 #define CKA_VENDOR_DEFINED              0x80000000UL
+#define CKA_STM_COUNTER_MAX_VALUE       0x80000001UL
+#define CKA_STM_COUNTER_RESET_VALUE     0x80000002UL
+#define CKA_STM_COUNTER_SATURATED       0x80000003UL
+#define CKA_STM_COUNTER_VALUE           0x80000004UL
+#define CKA_STM_COUNTER_INCREMENT       0x80000005UL
 
 /* CK_ATTRIBUTE is a structure that includes the type, length
  * and value of an attribute

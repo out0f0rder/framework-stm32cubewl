@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -276,6 +275,14 @@ static CK_RV encrypt_decrypt_init(CK_SESSION_HANDLE hSession,
         /* Can not retrieve proper key handle */
         e_ret_status = CKR_OBJECT_HANDLE_INVALID;
       }
+
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+      if (pkms_object != NULL_PTR)
+      {
+        KMS_Objects_ReleasePointer(hKey, pkms_object);
+      }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
+
       break;
     }
 #endif /* (KMS_AES_CBC & KMS_FCT_ENCRYPT) | (KMS_AES_CBC & KMS_FCT_DECRYPT) */
@@ -377,7 +384,7 @@ static CK_RV encrypt_decrypt_init(CK_SESSION_HANDLE hSession,
               else
               {
 #if (KMS_AES_CCM & KMS_FCT_DECRYPT)
-                /* Set remaining data to process in order to detect TAG within cyphertext */
+                /* Set remaining data to process in order to detect TAG within ciphertext */
                 p_ctx->dataRemain = (uint32_t)p_ctx->ca_ctx.mPayloadSize;
                 /* Initialize the operation, by passing the key and IV */
                 if (CA_AES_CCM_Decrypt_Init(&(p_ctx->ca_ctx),
@@ -432,6 +439,14 @@ static CK_RV encrypt_decrypt_init(CK_SESSION_HANDLE hSession,
         /* Can not retrieve proper key handle */
         e_ret_status = CKR_OBJECT_HANDLE_INVALID;
       }
+
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+      if (pkms_object != NULL_PTR)
+      {
+        KMS_Objects_ReleasePointer(hKey, pkms_object);
+      }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
+
       break;
     }
 #endif /* (KMS_AES_CCM & KMS_FCT_ENCRYPT) | (KMS_AES_CCM & KMS_FCT_DECRYPT) */
@@ -547,6 +562,14 @@ static CK_RV encrypt_decrypt_init(CK_SESSION_HANDLE hSession,
         /* Can not retrieve proper key handle */
         e_ret_status = CKR_OBJECT_HANDLE_INVALID;
       }
+
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+      if (pkms_object != NULL_PTR)
+      {
+        KMS_Objects_ReleasePointer(hKey, pkms_object);
+      }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
+
       break;
     }
 #endif /* (KMS_AES_ECB & KMS_FCT_ENCRYPT) | (KMS_AES_ECB & KMS_FCT_DECRYPT) | (KMS_AES_ECB & KMS_FCT_DERIVE_KEY) */
@@ -692,6 +715,14 @@ static CK_RV encrypt_decrypt_init(CK_SESSION_HANDLE hSession,
         /* Can not retrieve proper key handle */
         e_ret_status = CKR_OBJECT_HANDLE_INVALID;
       }
+
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+      if (pkms_object != NULL_PTR)
+      {
+        KMS_Objects_ReleasePointer(hKey, pkms_object);
+      }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
+
       break;
     }
 #endif /* (KMS_AES_GCM & KMS_FCT_ENCRYPT) | (KMS_AES_GCM & KMS_FCT_DECRYPT) */
@@ -1559,4 +1590,3 @@ CK_RV          KMS_DecryptFinal(CK_SESSION_HANDLE hSession, CK_BYTE_PTR pLastPar
   */
 
 #endif /* KMS_ENABLED */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -184,7 +183,7 @@ static uint8_t wrap_pubkey_rsa_to_der(uint8_t  *P_pDer,
 }
 
 /**
-  * @brief      Change the key's format from a rsa KEYPAIR to a der one.
+  * @brief      Change the key's format from a rsa KEY PAIR to a der one.
   * @param[out] *P_pDer: Der key
   * @param[in]  *P_pRsa_Modulus: Modulus
   * @param[in]  *P_pRsa_PrivExponent: Private Exponent
@@ -268,7 +267,7 @@ static uint8_t wrap_keypair_rsa_to_der(uint8_t  *P_pDer,
       mbedtls_ret = mbedtls_rsa_complete(rsa_ctx);
       if (mbedtls_ret == 0)
       {
-        /* Export to a DER format the keypair */
+        /* Export to a DER format the key pair */
         *P_plength = (uint32_t) mbedtls_pk_write_key_der(&pk_ctx, P_pDer, P_pDer_size);
         wrap_ret = WRAP_SUCCESS;
       }
@@ -635,5 +634,3 @@ int32_t CA_RSA_PKCS1v15_Verify(const CA_RSApubKey_stt *P_pPubKey,
 
 #endif /* CA_RSA_MBED_C */
 #endif /* CA_CORE_C */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-

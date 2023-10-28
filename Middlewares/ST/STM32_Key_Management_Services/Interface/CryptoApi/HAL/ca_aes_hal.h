@@ -9,13 +9,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -304,6 +303,19 @@ int32_t CA_AES_GCM_Encrypt_Append(CA_AESGCMctx_stt *P_pAESGCMctx,
 int32_t CA_AES_GCM_Encrypt_Finish(CA_AESGCMctx_stt *P_pAESGCMctx,
                                   uint8_t       *P_pOutputBuffer,
                                   int32_t       *P_pOutputSize);
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+int32_t CA_AES_GCM_Encrypt(CA_AESGCMctx_stt *P_pAESGCMctx,
+                           const uint8_t    *P_pKey,
+                           const uint8_t    *P_pIv,
+                           const uint8_t    *P_pHeaderBuffer,
+                           int32_t           P_headerSize,
+                           const uint8_t    *P_pInputBuffer,
+                           int32_t           P_inputSize,
+                           uint8_t          *P_pOutputBuffer,
+                           int32_t          *P_pOutputSize,
+                           uint8_t          *P_pTagBuffer,
+                           int32_t          *P_pTagSize);
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 #endif /* CA_ROUTE_AES_GCM & CA_ROUTE_AES_CFG_ENCRYPT_ENABLE */
 #if (CA_ROUTE_AES_GCM & CA_ROUTE_AES_CFG_DECRYPT_ENABLE)
 int32_t CA_AES_GCM_Decrypt_Init(CA_AESGCMctx_stt *P_pAESGCMctx,
@@ -317,6 +329,19 @@ int32_t CA_AES_GCM_Decrypt_Append(CA_AESGCMctx_stt *P_pAESGCMctx,
 int32_t CA_AES_GCM_Decrypt_Finish(CA_AESGCMctx_stt *P_pAESGCMctx,
                                   uint8_t       *P_pOutputBuffer,
                                   int32_t       *P_pOutputSize);
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+int32_t CA_AES_GCM_Decrypt(CA_AESGCMctx_stt *P_pAESGCMctx,
+                           const uint8_t *P_pKey,
+                           const uint8_t *P_pIv,
+                           const uint8_t *P_pHeaderBuffer,
+                           int32_t        P_headerSize,
+                           const uint8_t *P_pInputBuffer,
+                           int32_t        P_inputSize,
+                           uint8_t       *P_pOutputBuffer,
+                           int32_t       *P_pOutputSize,
+                           uint8_t       *P_pTagBuffer,
+                           int32_t       *P_pTagSize);
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 #endif /* CA_ROUTE_AES_GCM & CA_ROUTE_AES_CFG_DECRYPT_ENABLE */
 int32_t CA_AES_GCM_Header_Append(CA_AESGCMctx_stt *P_pAESGCMctx,
                                  const uint8_t *P_pInputBuffer,
@@ -333,6 +358,3 @@ extern "C" {
 #endif
 
 #endif /* CA_AES_HAL_H */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-

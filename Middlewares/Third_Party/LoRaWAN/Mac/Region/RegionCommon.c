@@ -72,8 +72,8 @@
  *
  * \remark `N` and `D` can be signed or unsigned
  *
- * \param [IN] N the numerator, which can have any sign
- * \param [IN] D the denominator, which can have any sign
+ * \param [in] N the numerator, which can have any sign
+ * \param [in] D the denominator, which can have any sign
  * \retval N / D with any fractional part rounded to the smallest integer value greater than or equal to `N / D`
  */
 #define DIV_CEIL( N, D )                                                       \
@@ -82,6 +82,10 @@
         ( ( ( N ) + ( D ) - 1 ) / ( D ) ) :                                    \
         ( ( N ) / ( D ) )                                                      \
     )
+
+#ifdef MW_LOG_ENABLED
+static const char *EventRXSlotStrings[] = { "1", "2", "C", "Multi_C", "P", "Multi_P" };
+#endif
 
 static uint16_t GetDutyCycle( Band_t* band, bool joined, SysTime_t elapsedTimeSinceStartup )
 {
@@ -347,7 +351,7 @@ TimerTime_t RegionCommonUpdateBandTimeOff( bool joined, Band_t* bands,
         // Check if the band is ready for transmission. Its ready,
         // when the duty cycle is off, or the TimeCredits of the band
         // is higher than the credit costs for the transmission.
-        if( ( bands[i].TimeCredits > creditCosts ) ||
+        if( ( bands[i].TimeCredits >= creditCosts ) ||
             ( ( dutyCycleEnabled == false ) && ( joined == true ) ) )
         {
             bands[i].ReadyForTransmission = true;
@@ -361,7 +365,7 @@ TimerTime_t RegionCommonUpdateBandTimeOff( bool joined, Band_t* bands,
             // for the next transmission.
             bands[i].ReadyForTransmission = false;
 
-            if( bands[i].MaxTimeCredits > creditCosts )
+            if( bands[i].MaxTimeCredits >= creditCosts )
             {
                 // The band can only be taken into account, if the maximum credits
                 // of the band are higher than the credit costs.
@@ -406,7 +410,6 @@ TimerTime_t RegionCommonUpdateBandTimeOff( bool joined, Band_t* bands,
             }
         }
     }
-
 
     if( validBands == 0 )
     {
@@ -460,14 +463,22 @@ uint8_t RegionCommonLinkAdrReqVerifyParams( RegionCommonLinkAdrReqVerifyParams_t
     if( status != 0 )
     {
         // Verify datarate. The variable phyParam. Value contains the minimum allowed datarate.
-        if( RegionCommonChanVerifyDr( verifyParams->NbChannels, verifyParams->ChannelsMask, datarate,
+        if( datarate == 0x0F )
+        { // 0xF means that the device MUST ignore that field, and keep the current parameter value.
+            datarate =  verifyParams->CurrentDatarate;
+        }
+        else if( RegionCommonChanVerifyDr( verifyParams->NbChannels, verifyParams->ChannelsMask, datarate,
                                       verifyParams->MinDatarate, verifyParams->MaxDatarate, verifyParams->Channels  ) == false )
         {
             status &= 0xFD; // Datarate KO
         }
 
         // Verify tx power
-        if( RegionCommonValueInRange( txPower, verifyParams->MaxTxPower, verifyParams->MinTxPower ) == 0 )
+        if( txPower == 0x0F )
+        { // 0xF means that the device MUST ignore that field, and keep the current parameter value.
+            txPower =  verifyParams->CurrentTxPower;
+        }
+        else if( RegionCommonValueInRange( txPower, verifyParams->MaxTxPower, verifyParams->MinTxPower ) == 0 )
         {
             // Verify if the maximum TX power is exceeded
             if( verifyParams->MaxTxPower > txPower )
@@ -485,7 +496,7 @@ uint8_t RegionCommonLinkAdrReqVerifyParams( RegionCommonLinkAdrReqVerifyParams_t
     if( status == 0x07 )
     {
         if( nbRepetitions == 0 )
-        { // Restore the default value according to the LoRaWAN specification
+        { // Set nbRep to the default value of 1.
             nbRepetitions = 1;
         }
     }
@@ -551,9 +562,7 @@ void RegionCommonRxBeaconSetup( RegionCommonRxBeaconSetupParams_t* rxBeaconSetup
                        1, 0, 10, rxBeaconSetupParams->SymbolTimeout, true, rxBeaconSetupParams->BeaconSize, false, 0, 0, false, rxContinuous );
 
     Radio.Rx( rxBeaconSetupParams->RxTime );
-    /* ST_WORKAROUND_BEGIN: Print Beacon parameters */
     MW_LOG(TS_ON, VLEVEL_M, "RX_BC on freq %d Hz at DR %d\r\n", rxBeaconSetupParams->Frequency, rxBeaconSetupParams->BeaconDatarate );
-    /* ST_WORKAROUND_END */
 }
 
 void RegionCommonCountNbOfEnabledChannels( RegionCommonCountNbOfEnabledChannelsParams_t* countNbOfEnabledChannelsParams,
@@ -683,14 +692,11 @@ uint32_t RegionCommonGetBandwidth( uint32_t drIndex, const uint32_t* bandwidths 
     }
 }
 
-/* ST_WORKAROUND_BEGIN: Print Tx/Rx config */
 void RegionCommonRxConfigPrint(LoRaMacRxSlot_t rxSlot, uint32_t frequency, int8_t dr)
 {
-    const char *slotStrings[] = { "1", "2", "C", "Multi_C", "P", "Multi_P" };
-
     if ( rxSlot < RX_SLOT_NONE )
     {
-        MW_LOG(TS_ON, VLEVEL_M,  "RX_%s on freq %d Hz at DR %d\r\n", slotStrings[rxSlot], frequency, dr );
+        MW_LOG(TS_ON, VLEVEL_M,  "RX_%s on freq %d Hz at DR %d\r\n", EventRXSlotStrings[rxSlot], frequency, dr );
     }
     else
     {
@@ -702,4 +708,3 @@ void RegionCommonTxConfigPrint(uint32_t frequency, int8_t dr)
 {
     MW_LOG(TS_ON, VLEVEL_M,  "TX on freq %d Hz at DR %d\r\n", frequency, dr );
 }
-/* ST_WORKAROUND_END */

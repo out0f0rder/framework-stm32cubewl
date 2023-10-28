@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -33,7 +32,7 @@
 #include "kms_mem.h"                    /* KMS memory utilities */
 
 #include "kms_digest.h"                 /* KMS digest services for Blob verification */
-#include "kms_sign_verify.h"            /* KMS Signature & verifcation services for Blob authentication */
+#include "kms_sign_verify.h"            /* KMS Signature & verification services for Blob authentication */
 #include "kms_enc_dec.h"                /* KMS encryption & decryption services */
 
 /** @addtogroup Key_Management_Services Key Management Services (KMS)
@@ -519,7 +518,9 @@ static CK_RV install_blob(kms_importblob_ctx_t *pCtx,
   {
     /* 1 ---------------------------------------------------------------------------------------------------------- */
     /* Search for first or next magic */
-    while ((*p_next_magic != KMS_ABI_VERSION_CK_2_40) && (e_ret_status == CKR_OK))
+    while ((*p_next_magic != KMS_ABI_VERSION_CK_2_40)
+           && (p_next_magic < (uint32_t *)(uint32_t)(&(pCtx->fw_decrypted_chunk[fw_decrypted_chunk_size])))
+           && (e_ret_status == CKR_OK))
     {
       /* If we reach the end of the chunk */
       if (p_next_magic == (uint32_t *)(uint32_t) &(pCtx->fw_decrypted_chunk[fw_decrypted_chunk_size]))
@@ -561,11 +562,13 @@ static CK_RV install_blob(kms_importblob_ctx_t *pCtx,
       }
     } /* ((*p_next_magic != KMS_ABI_VERSION_CK_2_40) && (e_ret_status == CKR_OK)) */
 
-    if ((*p_next_magic == KMS_ABI_VERSION_CK_2_40) && (e_ret_status == CKR_OK))
+    if ((*p_next_magic == KMS_ABI_VERSION_CK_2_40)
+        && (p_next_magic < (uint32_t *)(uint32_t)(&(pCtx->fw_decrypted_chunk[fw_decrypted_chunk_size])))
+        && (e_ret_status == CKR_OK))
     {
       /* 2 -------------------------------------------------------------------------------------------------------- */
       /* Copy header into temp header struct */
-      if ((fw_decrypted_chunk_size - index_in_decrypted_chunk) > sizeof(kms_obj_keyhead_no_blob_t))
+      if ((fw_decrypted_chunk_size - index_in_decrypted_chunk) >= sizeof(kms_obj_keyhead_no_blob_t))
       {
         /* Complete header available into decrypted chunk */
 
@@ -647,7 +650,7 @@ static CK_RV install_blob(kms_importblob_ctx_t *pCtx,
 
       while ((e_ret_status == CKR_OK) && (pBlob->blobs_size > bytes_copied_in_kms))
       {
-        if ((fw_decrypted_chunk_size - index_in_decrypted_chunk) > (pBlob->blobs_size - bytes_copied_in_kms))
+        if ((fw_decrypted_chunk_size - index_in_decrypted_chunk) >= (pBlob->blobs_size - bytes_copied_in_kms))
         {
           /* Complete blob available into decrypted chunk */
 
@@ -883,6 +886,29 @@ kms_obj_range_t  KMS_Objects_GetRange(CK_OBJECT_HANDLE hKey)
   /* hKey not in known ranges */
   return KMS_OBJECT_RANGE_UNKNOWN;
 }
+
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+/**
+  * @brief  Destroy the decrypted KMS object if needed
+  * @param  hObject Object handle
+  * @param  pObject Decrypted object to release
+  * @retval None
+  */
+void KMS_Objects_ReleasePointer(CK_OBJECT_HANDLE hObject, kms_obj_keyhead_t *pObject)
+{
+  kms_obj_range_t object_range;
+  uint32_t object_size;
+
+  object_range = KMS_Objects_GetRange(hObject);
+
+  if ((object_range == KMS_OBJECT_RANGE_NVM_STATIC_ID) || (object_range == KMS_OBJECT_RANGE_NVM_DYNAMIC_ID))
+  {
+    object_size = sizeof(kms_obj_keyhead_no_blob_t) + pObject->blobs_size;
+    memset(pObject, 0xFFU, object_size);
+    KMS_Free(KMS_SESSION_ID_INTERNAL | hObject, pObject);
+  }
+}
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 
 /**
   * @brief  This function allow to Lock key usage.
@@ -1164,6 +1190,10 @@ CK_RV KMS_FindObjectsFromTemplate(CK_SESSION_HANDLE hSession, CK_OBJECT_HANDLE_P
         phObject[*p_working_obj_count] = h_object;
         *p_working_obj_count = *p_working_obj_count + 1;
       }
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+      KMS_Objects_ReleasePointer(h_object, p_pkms_object);
+      p_pkms_object = NULL_PTR;
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
     }
 
     h_object++;
@@ -1840,4 +1870,3 @@ CK_RV KMS_Objects_CreateNStoreBlobForECCPair(CK_SESSION_HANDLE hSession,
   */
 
 #endif /* KMS_ENABLED */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

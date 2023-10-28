@@ -8,13 +8,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -51,7 +50,11 @@
 /** @addtogroup KMS_INIT_Exported_Variables Exported Variables
   * @{
   */
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+kms_manager_t  KMS_Manager = {0, 0, 0, {{0}}};  /*!< KMS global manager variable */
+#else /* KMS_ENCRYPT_DECRYPT_BLOB */
 kms_manager_t  KMS_Manager = {0, 0, {{0}}};  /*!< KMS global manager variable */
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 /**
   * @brief KMS session management variable
   */
@@ -155,10 +158,37 @@ CK_RV  KMS_Initialize(CK_VOID_PTR pInitArgs)
     /* Call the Platform Init function */
     KMS_PlatfObjects_Init();
 
-    /* Marking module as initialized */
-    KMS_Manager.initialized = 1U;
+    /* Call the Low Level Init function */
+    e_ret_status = KMS_LL_Initialize();
 
-    e_ret_status = CKR_OK;
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+    /* Call the data storage key Init function */
+    if ((e_ret_status ==  CKR_OK) && (KMS_Manager.key_initialized == 0x00U))
+    {
+      e_ret_status = KMS_LL_DataStorageKey_Init();
+      if (e_ret_status ==  CKR_OK)
+      {
+        KMS_Manager.key_initialized = 0xFFU;
+      }
+    }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
+
+    if (e_ret_status ==  CKR_OK)
+    {
+      /* Marking module as initialized */
+      KMS_Manager.initialized = 1U;
+    }
+    else
+    {
+      /* Call the Platform Finalize function */
+      KMS_PlatfObjects_Finalize();
+
+      /* Marking module as not initialized */
+      KMS_Manager.initialized = 0U;
+
+      /* This is to deinitialize the crypto api */
+      (void)CA_DeInit();
+    }
   }
 
   return e_ret_status;
@@ -194,6 +224,9 @@ CK_RV KMS_Finalize(CK_VOID_PTR pReserved)
   }
   else
   {
+    /* Call the Low Level Finalize function */
+    (void)KMS_LL_Finalize();
+
     /* Call the Platform Finalize function */
     KMS_PlatfObjects_Finalize();
 
@@ -853,4 +886,3 @@ CK_RV     KMS_GetMechanismInfo(CK_SLOT_ID slotID, CK_MECHANISM_TYPE type, CK_MEC
   */
 
 #endif /* KMS_ENABLED */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

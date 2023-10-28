@@ -7,13 +7,12 @@
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; Copyright (c) 2020 STMicroelectronics.
-  * All rights reserved.</center></h2>
+  * Copyright (c) 2020 STMicroelectronics.
+  * All rights reserved.
   *
-  * This software component is licensed by ST under Ultimate Liberty license
-  * SLA0044, the "License"; You may not use this file except in compliance with
-  * the License. You may obtain a copy of the License at:
-  *                             www.st.com/SLA0044
+  * This software is licensed under terms that can be found in the LICENSE file in
+  * the root directory of this software component.
+  * If no LICENSE file comes with this software, it is provided AS-IS.
   *
   ******************************************************************************
   */
@@ -40,16 +39,72 @@
 #define GCM_DECRYPTION_ONGOING  (1U << 1)
 #define GCM_INIT_NOT_DONE       (1U << 3)
 
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+#define CA_AES_HAL_NB_SESSIONS_MAX  1U
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 /* Private typedef -----------------------------------------------------------*/
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+typedef struct
+{
+  uint32_t            aesCbcDecHandleNb;
+  CRYP_HandleTypeDef *aesCbcDecHandle[CA_AES_HAL_NB_SESSIONS_MAX];
+} ca_aes_hal_manager_t;
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
+
+/* Private variables----------------------------------------------------------*/
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+ca_aes_hal_manager_t  CA_AES_HAL_Manager = {0, {0}};  /*!< CA AES HAL global manager variable */
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 
 /* Private function prototypes -----------------------------------------------*/
 static void cleanup_handle(CRYP_HandleTypeDef *CrypHandle);
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+static void add_aec_cbc_decrypt_handle(CRYP_HandleTypeDef *pCrypHandle);
+static void remove_aec_cbc_decrypt_handle(CRYP_HandleTypeDef *pCrypHandle);
+static void get_aec_cbc_decrypt_handle(CRYP_HandleTypeDef **pCrypHandle);
+static uint32_t secure_memcmp(const void *s1, const void *s2, size_t n);
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 
 /* Private function definitions -----------------------------------------------*/
 static void cleanup_handle(CRYP_HandleTypeDef *CrypHandle)
 {
   (void)memset(CrypHandle, 0, sizeof(CRYP_HandleTypeDef));
 }
+
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+static void add_aec_cbc_decrypt_handle(CRYP_HandleTypeDef *pCrypHandle)
+{
+  /* Only one encryption operation is allowed at a time */
+  CA_AES_HAL_Manager.aesCbcDecHandleNb  = 1;
+  CA_AES_HAL_Manager.aesCbcDecHandle[0] = pCrypHandle;
+}
+
+static void remove_aec_cbc_decrypt_handle(CRYP_HandleTypeDef *pCrypHandle)
+{
+  (void)pCrypHandle;
+  /* Only one encryption operation is allowed at a time */
+  CA_AES_HAL_Manager.aesCbcDecHandleNb  = 0;
+  CA_AES_HAL_Manager.aesCbcDecHandle[0] = NULL;
+}
+
+static void get_aec_cbc_decrypt_handle(CRYP_HandleTypeDef **pCrypHandle)
+{
+  /* Only one encryption operation is allowed at a time */
+  *pCrypHandle = CA_AES_HAL_Manager.aesCbcDecHandle[0];
+}
+
+static uint32_t secure_memcmp(const void *s1, const void *s2, size_t n)
+{
+  size_t i;
+  uint8_t *s1_p = (uint8_t*) s1;
+  uint8_t *s2_p = (uint8_t*) s2;
+  uint32_t ret = 0;
+  for (i = 0; i < n; i++) {
+    ret |= (s1_p[i] ^ s2_p[i]);
+  }
+  return ret;
+}
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 
 #if defined(CA_ROUTE_AES_CMAC) && ((CA_ROUTE_AES_CMAC & CA_ROUTE_MASK) == CA_ROUTE_HAL)
 #include "mac_stm32hal.c"
@@ -323,6 +378,12 @@ int32_t CA_AES_CBC_Decrypt_Init(CA_AESCBCctx_stt *P_pAESCBCctx,
     /* Initialization Error */
     aes_ret_status = CA_AES_ERR_BAD_CONTEXT;
   }
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+  else
+  {
+    add_aec_cbc_decrypt_handle(&P_pAESCBCctx->CrypHandle);
+  }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
   return aes_ret_status;
 }
 
@@ -396,6 +457,12 @@ int32_t CA_AES_CBC_Decrypt_Finish(CA_AESCBCctx_stt *P_pAESCBCctx,
   {
     aes_ret_status = CA_AES_ERR_BAD_PARAMETER;
   }
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+  else
+  {
+    remove_aec_cbc_decrypt_handle(&P_pAESCBCctx->CrypHandle);
+  }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
   cleanup_handle(&(P_pAESCBCctx->CrypHandle));
 
   return aes_ret_status;
@@ -1771,6 +1838,255 @@ int32_t CA_AES_GCM_Encrypt_Finish(CA_AESGCMctx_stt *P_pAESGCMctx,
 
   return aes_ret_status;
 }
+
+/**
+  * @brief      AES GCM Encryption function
+  * @param[in,out]
+  *             *P_pAESGCMctx: AES GCM, already initialized, context
+  * @param[in]  *P_pKey: Buffer with the Key
+  * @param[out] *P_pIv: Buffer with the IV
+  * @param[in]  *P_pHeaderBuffer: Additional data
+  * @param[in]  P_headerSize: Size of the additional data, expressed in bytes
+  * @param[in]  *P_pInputBuffer: Input buffer
+  * @param[in]  P_inputSize: Size of input data, expressed in bytes
+  * @param[out] *P_pOutputBuffer: Output buffer
+  * @param[out] *P_pOutputSize: Pointer to integer that will contain the size
+  *             of written output data, expressed in bytes
+  * @param[out] *P_pTagBuffer: Output Authentication TAG
+  * @param[out] *P_pTagSize: Size of returned TAG
+  *
+  * @note       1. P_pAESGCMctx.mKeySize (see AESGCMctx_stt) must be set with
+  *             the size of the key prior to calling this function.
+  *             Otherwise the following predefined values can be used:
+  *             - CA_CRL_AES128_KEY
+  *             - CA_CRL_AES256_KEY
+  *             2. P_pAESGCMctx.mIvSize must be set with the size of the IV
+  *             prior to calling this function. IV is composed of IV (12 bytes)
+  *             more counter (4 bytes).
+  *             3. Following recommendation by NIST expressed in section 5.2.1.1
+  *             of NIST SP 800-38D, this implementation supports only IV whose
+  *             size is of 96 bits.
+  *
+  * @retval     CA_AES_SUCCESS: Operation Successful
+  * @retval     CA_AES_ERR_BAD_PARAMETER: At least one parameter is a NULL pointer
+  * @retval     CA_AES_ERR_BAD_CONTEXT: Context not initialized with valid values
+  * @retval     CA_AES_ERR_BAD_OPERATION: One operation not allowed
+  */
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+int32_t CA_AES_GCM_Encrypt(CA_AESGCMctx_stt *P_pAESGCMctx,
+                           const uint8_t    *P_pKey,
+                           const uint8_t    *P_pIv,
+                           const uint8_t    *P_pHeaderBuffer,
+                           int32_t           P_headerSize,
+                           const uint8_t    *P_pInputBuffer,
+                           int32_t           P_inputSize,
+                           uint8_t          *P_pOutputBuffer,
+                           int32_t          *P_pOutputSize,
+                           uint8_t          *P_pTagBuffer,
+                           int32_t          *P_pTagSize)
+{
+  int32_t aes_ret_status = CA_AES_SUCCESS;
+  CRYP_HandleTypeDef *pActiveCrypHandle;
+  CRYP_ContextTypeDef crypContext;
+  CRYP_ConfigTypeDef crypConfig;
+
+  if ((P_pAESGCMctx == NULL)
+      || (P_pKey == NULL)
+      || (P_pIv == NULL)
+      || (P_pInputBuffer == NULL)
+      || (P_pOutputBuffer == NULL)
+      || (P_pOutputSize == NULL)
+      || (P_pTagBuffer == NULL)
+      || (P_pTagSize == NULL))
+  {
+    return CA_AES_ERR_BAD_PARAMETER;
+  }
+
+  if ((P_pAESGCMctx->mKeySize == 0) || (P_pAESGCMctx->mIvSize != 12))
+  {
+    return CA_AES_ERR_BAD_CONTEXT;
+  }
+
+  if ((P_pAESGCMctx->mTagSize < 0) || (P_pAESGCMctx->mTagSize > 16))
+  {
+    return CA_AES_ERR_BAD_CONTEXT;
+  }
+
+  /* Check if a cryptographic operation is ongoing */
+  get_aec_cbc_decrypt_handle(&pActiveCrypHandle);
+
+  if (pActiveCrypHandle == NULL_PTR)
+  {
+    /* load the key and ivec, eventually performs key schedule, etc  */
+    aes_ret_status = CA_AES_GCM_Encrypt_Init(P_pAESGCMctx, P_pKey, P_pIv);
+
+    /* Add the additional data*/
+    if ((aes_ret_status == CA_AES_SUCCESS) && (P_pHeaderBuffer != NULL) && (P_headerSize != 0))
+    {
+      aes_ret_status = CA_AES_GCM_Header_Append(P_pAESGCMctx,
+                                                P_pHeaderBuffer,
+                                                P_headerSize);
+    }
+
+    /* Encrypt Data */
+    if (aes_ret_status == CA_AES_SUCCESS)
+    {
+      aes_ret_status = CA_AES_GCM_Encrypt_Append(P_pAESGCMctx,
+                                                 P_pInputBuffer,
+                                                 P_inputSize,
+                                                 P_pOutputBuffer,
+                                                 P_pOutputSize);
+    }
+
+    /* Finalize the encryption */
+    if (aes_ret_status == CA_AES_SUCCESS)
+    {
+      aes_ret_status = CA_AES_GCM_Encrypt_Finish(P_pAESGCMctx,
+                                                 P_pTagBuffer,
+                                                 P_pTagSize);
+    }
+  }
+  else
+  {
+    /* Save the context of the ongoing cryptographic operation */
+    if (HAL_CRYP_SaveContext(pActiveCrypHandle, &crypContext) != HAL_OK)
+    {
+      aes_ret_status = CA_AES_ERR_BAD_OPERATION;
+    }
+
+    /* Get the configuration of the ongoing cryptographic operation */
+    if (aes_ret_status == CA_AES_SUCCESS)
+    {
+      if (HAL_CRYP_GetConfig(pActiveCrypHandle, &crypConfig) != HAL_OK)
+      {
+        aes_ret_status = CA_AES_ERR_BAD_OPERATION;
+      }
+    }
+
+    /* Update the CRYP configuration */
+    if (aes_ret_status == CA_AES_SUCCESS)
+    {
+      crypConfig.DataType  = CRYP_DATATYPE_8B;
+      if (P_pAESGCMctx->mKeySize == (int32_t)CA_CRL_AES128_KEY)
+      {
+        crypConfig.KeySize = CRYP_KEYSIZE_128B;
+      }
+      else if (P_pAESGCMctx->mKeySize == (int32_t)CA_CRL_AES256_KEY)
+      {
+        crypConfig.KeySize = CRYP_KEYSIZE_256B;
+      }
+      else
+      {
+        /* Not supported by HW accelerator*/
+        aes_ret_status = CA_AES_ERR_BAD_CONTEXT;
+      }
+
+      if (aes_ret_status == CA_AES_SUCCESS)
+      {
+        /* Init IV and key here because of endianness */
+        for (uint8_t i = 0; i < 3U; i++)
+        {
+          P_pAESGCMctx->Iv_endian[4U * i]        = P_pIv[3U + (4U * i)];
+          P_pAESGCMctx->Iv_endian[1U + (4U * i)] = P_pIv[2U + (4U * i)];
+          P_pAESGCMctx->Iv_endian[2U + (4U * i)] = P_pIv[1U + (4U * i)];
+          P_pAESGCMctx->Iv_endian[3U + (4U * i)] = P_pIv[4U * i];
+        }
+        P_pAESGCMctx->Iv_endian[12] = 2;
+        P_pAESGCMctx->Iv_endian[13] = 0;
+        P_pAESGCMctx->Iv_endian[14] = 0;
+        P_pAESGCMctx->Iv_endian[15] = 0;
+
+        for (uint8_t i = 0; i < ((uint8_t)(P_pAESGCMctx->mKeySize) / 4U); i++)
+        {
+          P_pAESGCMctx->Key_endian[4U * i]        = P_pKey[3U + (4U * i)];
+          P_pAESGCMctx->Key_endian[1U + (4U * i)] = P_pKey[2U + (4U * i)];
+          P_pAESGCMctx->Key_endian[2U + (4U * i)] = P_pKey[1U + (4U * i)];
+          P_pAESGCMctx->Key_endian[3U + (4U * i)] = P_pKey[4U * i];
+        }
+
+        crypConfig.Algorithm       = CRYP_AES_GCM_GMAC;
+        crypConfig.pKey            = (uint32_t *)(uint32_t)(P_pAESGCMctx->Key_endian);
+        crypConfig.pInitVect       = (uint32_t *)(uint32_t)(P_pAESGCMctx->Iv_endian);
+
+        crypConfig.B0 = NULL;
+        crypConfig.DataWidthUnit = CRYP_DATAWIDTHUNIT_BYTE;
+        crypConfig.KeyIVConfigSkip = CRYP_KEYIVCONFIG_ONCE;
+
+        /* Configure the additional data if provided */
+        if ((P_pHeaderBuffer != NULL) && (P_headerSize != 0))
+        {
+          P_pAESGCMctx->mAADsize = P_headerSize;
+          crypConfig.HeaderSize = (uint32_t)(P_headerSize) / 4U;
+          crypConfig.Header     = (uint32_t *)(uint32_t)P_pHeaderBuffer;
+        }
+        else
+        {
+          P_pAESGCMctx->mAADsize = 0;
+          crypConfig.HeaderSize = 0;
+          crypConfig.Header = NULL;
+        }
+      }
+    }
+
+    /* Set the updated configuration */
+    if (aes_ret_status == CA_AES_SUCCESS)
+    {
+      if (HAL_CRYP_SetConfig(pActiveCrypHandle, &crypConfig) != HAL_OK)
+      {
+        *P_pOutputSize = 0;
+        aes_ret_status = CA_AES_ERR_BAD_OPERATION;
+      }
+    }
+
+    /* Add the additional data if provided */
+    if ((aes_ret_status == CA_AES_SUCCESS) && (P_pHeaderBuffer != NULL) && (P_headerSize != 0))
+    {
+      if (HAL_CRYP_Encrypt(pActiveCrypHandle, (uint32_t *)NULL, 0, (uint32_t *)NULL,
+                           TIMEOUT_VALUE) != HAL_OK)
+      {
+        aes_ret_status = CA_AES_ERR_BAD_OPERATION;
+      }
+    }
+
+    /* Encrypt Data */
+    if (aes_ret_status == CA_AES_SUCCESS)
+    {
+      if (HAL_CRYP_Encrypt(pActiveCrypHandle, (uint32_t *)(uint32_t)P_pInputBuffer, (uint16_t)P_inputSize,
+                           (uint32_t *)(uint32_t)P_pOutputBuffer,
+                           TIMEOUT_VALUE) != HAL_OK)
+      {
+        aes_ret_status = CA_AES_ERR_BAD_OPERATION;
+      }
+
+      *P_pOutputSize = P_inputSize;
+    }
+
+    /* Finalize the encryption */
+    if (aes_ret_status == CA_AES_SUCCESS)
+    {
+      if (HAL_CRYPEx_AESGCM_GenerateAuthTAG(pActiveCrypHandle,
+                                            (uint32_t *)(uint32_t)P_pTagBuffer, TIMEOUT_VALUE) != HAL_OK)
+      {
+        aes_ret_status = CA_AES_ERR_BAD_CONTEXT;
+      }
+
+      *P_pTagSize = P_pAESGCMctx->mTagSize;
+    }
+
+    /* Resume any ongoing cryptographic operation */
+    if (HAL_CRYP_RestoreContext(pActiveCrypHandle, &crypContext) == HAL_OK)
+    {
+      pActiveCrypHandle->Init.KeyIVConfigSkip = CRYP_IVCONFIG_ONCE;
+    }
+    else
+    {
+      aes_ret_status = CA_AES_ERR_BAD_OPERATION;
+    }
+  }
+
+  return aes_ret_status;
+}
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 #endif /* CA_ROUTE_AES_GCM & CA_ROUTE_AES_CFG_ENCRYPT_ENABLE */
 #if (CA_ROUTE_AES_GCM & CA_ROUTE_AES_CFG_DECRYPT_ENABLE)
 /**
@@ -1964,7 +2280,11 @@ int32_t CA_AES_GCM_Decrypt_Finish(CA_AESGCMctx_stt *P_pAESGCMctx,
   }
 
   /* Check if tag is valid                                               */
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+  if (secure_memcmp(tag, P_pAESGCMctx->pmTag, 16) != 0)
+#else /* KMS_ENCRYPT_DECRYPT_BLOB */
   if (memcmp(tag, P_pAESGCMctx->pmTag, 16) != 0)
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
   {
     aes_ret_status =  CA_AUTHENTICATION_FAILED;
   }
@@ -1974,6 +2294,14 @@ int32_t CA_AES_GCM_Decrypt_Finish(CA_AESGCMctx_stt *P_pAESGCMctx,
     aes_ret_status = CA_AES_ERR_BAD_CONTEXT;
   }
   cleanup_handle(&(P_pAESGCMctx->CrypHandle));
+
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+  /* Check again if the tag is valid                                     */
+  if (secure_memcmp(tag, P_pAESGCMctx->pmTag, 16) != 0)
+  {
+    aes_ret_status =  CA_AUTHENTICATION_FAILED;
+  }
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 
   return aes_ret_status;
 }
@@ -2030,9 +2358,121 @@ int32_t CA_AES_GCM_Header_Append(CA_AESGCMctx_stt *P_pAESGCMctx,
   }
   return aes_ret_status;
 }
+
+/**
+  * @brief      AES GCM Decryption function
+  * @param[in,out]
+  *             *P_pAESGCMctx: AES GCM, already initialized, context
+  * @param[in]  *P_pKey: Buffer with the Key
+  * @param[out] *P_pIv: Buffer with the IV
+  * @param[in]  *P_pHeaderBuffer: Additional data
+  * @param[in]  P_headerSize: Size of the additional data, expressed in bytes
+  * @param[in]  *P_pInputBuffer: Input buffer
+  * @param[in]  P_inputSize: Size of input data, expressed in bytes
+  * @param[out] *P_pOutputBuffer: Output buffer
+  * @param[out] *P_pOutputSize: Pointer to integer that will contain the size
+  *             of written output data, expressed in bytes
+  * @param[out] *P_pTagBuffer: Kept for API compatibility but won't be used,
+  *             should be NULL
+  * @param[out] *P_pTagSize: Kept for API compatibility, must be provided
+  *             but will be set to zero
+  *
+  * @note       1. P_pAESGCMctx.mKeySize (see AESGCMctx_stt) must be set with
+  *             the size of the key prior to calling this function.
+  *             Otherwise the following predefined values can be used:
+  *             - CA_CRL_AES128_KEY
+  *             - CA_CRL_AES256_KEY
+  *             2. P_pAESGCMctx.mIvSize must be set with the size of the IV
+  *             prior to calling this function. IV is composed of IV (12 bytes)
+  *             more counter (4 bytes).
+  *             3. Following recommendation by NIST expressed in section 5.2.1.1
+  *             of NIST SP 800-38D, this implementation supports only IV whose
+  *             size is of 96 bits.
+  *
+  * @note       This function requires:
+  *             P_pAESGCMctx->pmTag to be set to a valid pointer to the tag
+  *             to be checked.
+  *             P_pAESGCMctx->mTagSize to contain a valid value between 1 and 16
+  * @retval     CA_AES_SUCCESS: Operation Successful
+  * @retval     CA_AES_ERR_BAD_PARAMETER: At least one parameter is a NULL pointer
+  * @retval     CA_AES_ERR_BAD_CONTEXT: Context not initialized with valid values
+  * @retval     CA_AES_ERR_BAD_OPERATION: One operation not allowed
+  */
+#if defined(KMS_ENCRYPT_DECRYPT_BLOB)
+int32_t CA_AES_GCM_Decrypt(CA_AESGCMctx_stt *P_pAESGCMctx,
+                           const uint8_t *P_pKey,
+                           const uint8_t *P_pIv,
+                           const uint8_t *P_pHeaderBuffer,
+                           int32_t        P_headerSize,
+                           const uint8_t *P_pInputBuffer,
+                           int32_t        P_inputSize,
+                           uint8_t       *P_pOutputBuffer,
+                           int32_t       *P_pOutputSize,
+                           uint8_t       *P_pTagBuffer,
+                           int32_t       *P_pTagSize)
+{
+  int32_t aes_ret_status = CA_AES_SUCCESS;
+
+  (void)P_pTagBuffer;
+
+  if ((P_pAESGCMctx == NULL)
+      || (P_pKey == NULL)
+      || (P_pIv == NULL)
+      || (P_pInputBuffer == NULL)
+      || (P_pOutputBuffer == NULL)
+      || (P_pOutputSize == NULL)
+      || (P_pTagSize == NULL))
+  {
+    return CA_AES_ERR_BAD_PARAMETER;
+  }
+
+  if ((P_pAESGCMctx->mKeySize == 0) || (P_pAESGCMctx->mIvSize != 12))
+  {
+    return CA_AES_ERR_BAD_CONTEXT;
+  }
+
+  if ((P_pAESGCMctx->mTagSize < 0) || (P_pAESGCMctx->mTagSize > 16))
+  {
+    return CA_AES_ERR_BAD_CONTEXT;
+  }
+
+  /* load the key and ivec, eventually performs key schedule, etc  */
+  aes_ret_status = CA_AES_GCM_Decrypt_Init(P_pAESGCMctx, P_pKey, P_pIv);
+
+  /* Add the additional data*/
+  if ((aes_ret_status == CA_AES_SUCCESS) && (P_pHeaderBuffer != NULL) && (P_headerSize != 0))
+  {
+    aes_ret_status = CA_AES_GCM_Header_Append(P_pAESGCMctx,
+                                              P_pHeaderBuffer,
+                                              P_headerSize);
+  }
+
+  /* Decrypt Data */
+  if (aes_ret_status == CA_AES_SUCCESS)
+  {
+    aes_ret_status = CA_AES_GCM_Decrypt_Append(P_pAESGCMctx,
+                                               P_pInputBuffer,
+                                               P_inputSize,
+                                               P_pOutputBuffer,
+                                               P_pOutputSize);
+  }
+
+  /* Finalize the decryption */
+  if (aes_ret_status == CA_AES_SUCCESS)
+  {
+    aes_ret_status = CA_AES_GCM_Decrypt_Finish(P_pAESGCMctx,
+                                               NULL,
+                                               P_pTagSize);
+    if (aes_ret_status == CA_AUTHENTICATION_SUCCESSFUL)
+    {
+      aes_ret_status = CA_AES_SUCCESS;
+    }
+  }
+
+  return aes_ret_status;
+}
+#endif /* KMS_ENCRYPT_DECRYPT_BLOB */
 #endif /* (CA_ROUTE_AES_GCM & CA_ROUTE_MASK) == CA_ROUTE_HAL */
 
 #endif /* CA_AES_HAL_C */
 #endif /* CA_CORE_C */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
-
